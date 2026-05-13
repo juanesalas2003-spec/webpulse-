@@ -8,7 +8,9 @@ import { generateJsonLD }     from './src/outputs/p2-jsonld.js'
 import { notifyJelou }        from './src/outputs/p4-jelou.js'
 import { scoreEntityDensity } from './src/entity-density.js'
 import { calculateRAR }       from './src/rar-calculator.js'
-import { supabase }           from './src/db.js'
+import { supabase }           from './src/db.js'import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 
 const app = express()
 app.use((req, res, next) => {
@@ -108,5 +110,16 @@ app.get('/api/prospects', async (req, res) => {
   res.json(data)
 })
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+app.get('/panel', (req, res) => {
+  res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))const __dirname = dirname(fileURLToPath(import.meta.url))
+app.get('/panel', (req, res) => {
+  res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))
+})
+})
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
