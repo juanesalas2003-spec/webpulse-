@@ -1,5 +1,8 @@
 import express from 'express'
 import 'dotenv/config'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import { scrapeUrl }          from './src/firecrawl.js'
 import { scoreAudit }         from './src/scorer.js'
 import { routeProduct }       from './src/router.js'
@@ -8,17 +11,24 @@ import { generateJsonLD }     from './src/outputs/p2-jsonld.js'
 import { notifyJelou }        from './src/outputs/p4-jelou.js'
 import { scoreEntityDensity } from './src/entity-density.js'
 import { calculateRAR }       from './src/rar-calculator.js'
-import { supabase }           from './src/db.js'import { readFileSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+import { supabase }           from './src/db.js'
 
-const app = express()
+const app       = express()
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+app.use(express.json())
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', 'Content-Type')
   next()
-}
+})
 
+// ─── Panel de administración ─────────────────────────────
+app.get('/panel', (req, res) => {
+  res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))
+})
+
+// ─── Audit individual ────────────────────────────────────
 app.post('/api/audit', async (req, res) => {
   const { url, sector = 'general', contact, channel = 'whatsapp' } = req.body
   if (!url) return res.status(400).json({ error: 'url requerida' })
@@ -34,11 +44,10 @@ app.post('/api/audit', async (req, res) => {
     console.log(`[audit] Scraping ${url}...`)
     const extracted = await scrapeUrl(url)
 
-    const { score, flags }   = scoreAudit(extracted, sector)
-    const entityDensity      = scoreEntityDensity(extracted.schema_org, sector)
-    const rar                = calculateRAR(sector, score)
-
-    const combinedScore = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
+    const { score, flags } = scoreAudit(extracted, sector)
+    const entityDensity    = scoreEntityDensity(extracted.schema_org, sector)
+    const rar              = calculateRAR(sector, score)
+    const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
 
     await supabase.from('audits').insert({
       prospect_id:   prospect.id,
@@ -100,6 +109,46 @@ app.post('/api/audit', async (req, res) => {
   }
 })
 
+// ─── Audit batch ─────────────────────────────────────────
+app.post('/api/audit/batch', async (req, res) => {
+  const { urls, sector = 'general' } = req.body
+  if (!urls || !Array.isArray(urls)) {
+    return res.status(400).json({ error: 'urls debe ser un array' })
+  }
+  res.json({ message: `Procesando ${urls.length} URLs...`, status: 'queued' })
+
+  for (const url of urls) {
+    try {
+      await new Promise(r => setTimeout(r, 2000))
+      const domain    = new URL(url).hostname
+      const extracted = await scrapeUrl(url)
+      const { score, flags } = scoreAudit(extracted, sector)
+      const entityDensity    = scoreEntityDensity(extracted.schema_org, sector)
+      const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
+      const { product }      = routeProduct(combinedScore)
+
+      const { data: prospect } = await supabase
+        .from('prospects')
+        .insert({ url, domain, sector, score: combinedScore, status: 'audited', product_assigned: product })
+        .select().single()
+
+      await supabase.from('audits').insert({
+        prospect_id: prospect.id,
+        flags,
+        score: combinedScore,
+        headings: extracted.headings,
+        images_total: extracted.images_alt.length,
+        images_no_alt: extracted.images_alt.filter(a => !a?.trim()).length
+      })
+
+      console.log(`[batch] ${url} → score: ${combinedScore} → producto: ${product}`)
+    } catch (err) {
+      console.error(`[batch] Error en ${url}:`, err.message)
+    }
+  }
+})
+
+// ─── Consultar prospectos ─────────────────────────────────
 app.get('/api/prospects', async (req, res) => {
   const { status, min_score } = req.query
   let query = supabase.from('prospects_summary').select('*')
@@ -110,16 +159,6 @@ app.get('/api/prospects', async (req, res) => {
   res.json(data)
 })
 
-const PORT = process.env.PORT || 3000import { readFileSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
-app.get('/panel', (req, res) => {
-  res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))const __dirname = dirname(fileURLToPath(import.meta.url))
-app.get('/panel', (req, res) => {
-  res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))
-})
-})
+// ─── Servidor ─────────────────────────────────────────────
+const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
