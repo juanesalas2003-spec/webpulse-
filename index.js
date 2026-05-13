@@ -11,7 +11,11 @@ import { calculateRAR }       from './src/rar-calculator.js'
 import { supabase }           from './src/db.js'
 
 const app = express()
-app.use(express.json())
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'Content-Type')
+  next()
+}
 
 app.post('/api/audit', async (req, res) => {
   const { url, sector = 'general', contact, channel = 'whatsapp' } = req.body

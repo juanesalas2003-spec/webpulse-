@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webpulse — Panel de Control</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; }
+    header { background: #1a1a1a; padding: 20px 40px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 22px; font-weight: 700; color: #fff; }
+    header span { font-size: 13px; color: #888; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 30px 40px 0; }
+    .stat { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; }
+    .stat .label { font-size: 12px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat .value { font-size: 28px; font-weight: 700; color: #fff; }
+    .stat .sub { font-size: 12px; color: #555; margin-top: 4px; }
+    .filters { padding: 24px 40px 0; display: flex; gap: 12px; align-items: center; }
+    .filters select, .filters input { background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+    .filters button { background: #6c47ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .filters button:hover { background: #5a38e0; }
+    .table-wrap { padding: 20px 40px 40px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 14px; color: #888; font-weight: 500; border-bottom: 1px solid #2a2a2a; font-size: 11px; text-transform: uppercase; }
+    td { padding: 14px; border-bottom: 1px solid #1e1e1e; vertical-align: middle; }
+    tr:hover td { background: #1a1a1a; }
+    .score-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .score-critical { background: #3d1a1a; color: #ff6b6b; }
+    .score-medium { background: #3d2e1a; color: #ffa94d; }
+    .score-ok { background: #1a3d2e; color: #69db7c; }
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+    .status-pending { background: #2a2a2a; color: #888; }
+    .status-audited { background: #1a2a3d; color: #74c0fc; }
+    .status-contacted { background: #2a1a3d; color: #b197fc; }
+    .status-delivered { background: #1a3d2e; color: #69db7c; }
+    .product-p1 { color: #888; }
+    .product-p2 { color: #74c0fc; }
+    .product-p3 { color: #b197fc; }
+    .product-p4 { color: #ffd43b; }
+    .rar { font-weight: 600; color: #69db7c; }
+    .domain { font-weight: 500; color: #f0f0f0; }
+    .domain small { display: block; color: #555; font-size: 11px; font-weight: 400; }
+    .empty { text-align: center; padding: 60px; color: #555; }
+    .loading { text-align: center; padding: 60px; color: #888; }
+    .refresh-btn { background: none; border: 1px solid #2a2a2a; color: #888; padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+    .refresh-btn:hover { border-color: #555; color: #f0f0f0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Webpulse</h1>
+  <div style="display:flex;gap:16px;align-items:center">
+    <span id="last-update">Cargando...</span>
+    <button class="refresh-btn" onclick="loadProspects()">↻ Actualizar</button>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat">
+    <div class="label">Total auditados</div>
+    <div class="value" id="stat-total">—</div>
+    <div class="sub">prospectos en pipeline</div>
+  </div>
+  <div class="stat">
+    <div class="label">Score promedio</div>
+    <div class="value" id="stat-score">—</div>
+    <div class="sub">urgencia de intervención</div>
+  </div>
+  <div class="stat">
+    <div class="label">RAR-IA total</div>
+    <div class="value" id="stat-rar">—</div>
+    <div class="sub">USD/mes en riesgo</div>
+  </div>
+  <div class="stat">
+    <div class="label">Críticos (P2+)</div>
+    <div class="value" id="stat-critical">—</div>
+    <div class="sub">score ≥ 7</div>
+  </div>
+</div>
+
+<div class="filters">
+  <select id="filter-status" onchange="loadProspects()">
+    <option value="">Todos los estados</option>
+    <option value="pending">Pendiente</option>
+    <option value="audited">Auditado</option>
+    <option value="contacted">Contactado</option>
+    <option value="delivered">Entregado</option>
+  </select>
+  <select id="filter-score" onchange="loadProspects()">
+    <option value="">Todos los scores</option>
+    <option value="7">Score ≥ 7 (Crítico)</option>
+    <option value="4">Score ≥ 4 (Mejorable)</option>
+  </select>
+  <button onclick="loadProspects()">Buscar</button>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Sitio</th>
+        <th>Sector</th>
+        <th>Score</th>
+        <th>RAR mensual</th>
+        <th>Producto</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody id="prospects-table">
+      <tr><td colspan="7" class="loading">Cargando prospectos...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const API = 'https://webpulse-production-7f4c.up.railway.app'
+
+  const RAR_BY_SECTOR = {
+    real_estate: { monthly: 7350, label: 'Inmobiliaria' },
+    health:      { monthly: 3200, label: 'Salud' },
+    restaurant:  { monthly: 840,  label: 'Restaurante' },
+    hotel:       { monthly: 2450, label: 'Hotel' },
+    general:     { monthly: 1575, label: 'General' }
+  }
+
+  function scoreClass(score) {
+    if (score >= 7) return 'score-critical'
+    if (score >= 4) return 'score-medium'
+    return 'score-ok'
+  }
+
+  function statusClass(status) {
+    return 'status-' + (status || 'pending')
+  }
+
+  function productClass(product) {
+    return 'product-' + (product || 'p1').toLowerCase()
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—'
+    return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
+
+  function rarEstimate(sector, score) {
+    const bench = RAR_BY_SECTOR[sector] || RAR_BY_SECTOR.general
+    const risk = score / 10
+    return Math.round(bench.monthly * risk)
+  }
+
+  async function loadProspects() {
+    const status   = document.getElementById('filter-status').value
+    const minScore = document.getElementById('filter-score').value
+
+    let url = API + '/api/prospects?'
+    if (status)   url += 'status=' + status + '&'
+    if (minScore) url += 'min_score=' + minScore
+
+    const tbody = document.getElementById('prospects-table')
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>'
+
+    try {
+      const res  = await fetch(url)
+      const data = await res.json()
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay prospectos aún. Ejecuta tu primer audit.</td></tr>'
+        return
+      }
+
+      // Stats
+      const total    = data.length
+      const avgScore = (data.reduce((a, b) => a + (b.score || 0), 0) / total).toFixed(1)
+      const totalRAR = data.reduce((a, b) => a + rarEstimate(b.sector, b.score || 0), 0)
+      const critical = data.filter(p => (p.score || 0) >= 7).length
+
+      document.getElementById('stat-total').textContent    = total
+      document.getElementById('stat-score').textContent    = avgScore
+      document.getElementById('stat-rar').textContent      = '$' + totalRAR.toLocaleString()
+      document.getElementById('stat-critical').textContent = critical
+
+      // Tabla
+      tbody.innerHTML = data.map(p => {
+        const rar = rarEstimate(p.sector, p.score || 0)
+        return `
+          <tr>
+            <td>
+              <div class="domain">
+                ${p.domain || p.url}
+                <small>${p.url}</small>
+              </div>
+            </td>
+            <td>${p.sector || 'general'}</td>
+            <td><span class="score-badge ${scoreClass(p.score || 0)}">${p.score || '—'}</span></td>
+            <td class="rar">$${rar.toLocaleString()}/mes</td>
+            <td class="${productClass(p.product_assigned)}">${p.product_assigned || '—'}</td>
+            <td><span class="status-badge ${statusClass(p.status)}">${p.status || 'pending'}</span></td>
+            <td>${formatDate(p.created_at)}</td>
+          </tr>
+        `
+      }).join('')
+
+      document.getElementById('last-update').textContent =
+        'Actualizado: ' + new Date().toLocaleTimeString('es-CO')
+
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Error conectando con la API. Verifica que el servidor esté activo.</td></tr>'
+    }
+  }
+
+  loadProspects()
+  setInterval(loadProspects, 30000)
+</script>
+
+</body>
+</html>
