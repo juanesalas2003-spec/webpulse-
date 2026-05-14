@@ -192,7 +192,20 @@ app.get('/api/prospects', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
 })
-
+// ─── Actualizar estado de prospect ───────────────────────
+app.patch('/api/prospects/:id/status', async (req, res) => {
+  const { id } = req.params
+  const { status } = req.body
+  const valid = ['pending','audited','contacted','delivered']
+  if (!valid.includes(status)) return res.status(400).json({ error: 'Estado inválido' })
+  const { data, error } = await supabase
+    .from('prospects')
+    .update({ status })
+    .eq('id', id)
+    .select().single()
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
 // ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
