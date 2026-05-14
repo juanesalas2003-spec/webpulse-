@@ -9,17 +9,30 @@
     body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; }
     header { background: #1a1a1a; padding: 20px 40px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
     header h1 { font-size: 22px; font-weight: 700; color: #fff; }
-    header span { font-size: 13px; color: #888; }
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 30px 40px 0; }
     .stat { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; }
     .stat .label { font-size: 12px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
     .stat .value { font-size: 28px; font-weight: 700; color: #fff; }
     .stat .sub { font-size: 12px; color: #555; margin-top: 4px; }
-    .filters { padding: 24px 40px 0; display: flex; gap: 12px; align-items: center; }
-    .filters select, .filters input { background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+
+    /* AUDIT FORM */
+    .audit-box { margin: 24px 40px 0; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; }
+    .audit-box h2 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #ccc; }
+    .audit-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .audit-form input { flex: 1; min-width: 260px; background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+    .audit-form input:focus { outline: none; border-color: #6c47ff; }
+    .audit-form select { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+    .audit-form button { background: #6c47ff; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .audit-form button:hover { background: #5a38e0; }
+    .audit-form button:disabled { background: #333; color: #666; cursor: default; }
+    .audit-result { margin-top: 16px; padding: 14px; background: #0f0f0f; border-radius: 8px; font-size: 13px; display: none; }
+    .audit-result.success { border: 1px solid #1a3d2e; color: #69db7c; }
+    .audit-result.error { border: 1px solid #3d1a1a; color: #ff6b6b; }
+
+    .filters { padding: 16px 40px 0; display: flex; gap: 12px; align-items: center; }
+    .filters select { background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
     .filters button { background: #6c47ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-    .filters button:hover { background: #5a38e0; }
-    .table-wrap { padding: 20px 40px 40px; overflow-x: auto; }
+    .table-wrap { padding: 16px 40px 40px; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { text-align: left; padding: 10px 14px; color: #888; font-weight: 500; border-bottom: 1px solid #2a2a2a; font-size: 11px; text-transform: uppercase; }
     td { padding: 14px; border-bottom: 1px solid #1e1e1e; vertical-align: middle; }
@@ -33,17 +46,17 @@
     .status-audited { background: #1a2a3d; color: #74c0fc; }
     .status-contacted { background: #2a1a3d; color: #b197fc; }
     .status-delivered { background: #1a3d2e; color: #69db7c; }
-    .product-p1 { color: #888; }
-    .product-p2 { color: #74c0fc; }
-    .product-p3 { color: #b197fc; }
-    .product-p4 { color: #ffd43b; }
+    .product-p2 { color: #74c0fc; font-weight: 600; }
+    .product-p3 { color: #b197fc; font-weight: 600; }
+    .product-p4 { color: #ffd43b; font-weight: 600; }
     .rar { font-weight: 600; color: #69db7c; }
-    .domain { font-weight: 500; color: #f0f0f0; }
+    .domain { font-weight: 500; }
     .domain small { display: block; color: #555; font-size: 11px; font-weight: 400; }
     .empty { text-align: center; padding: 60px; color: #555; }
-    .loading { text-align: center; padding: 60px; color: #888; }
     .refresh-btn { background: none; border: 1px solid #2a2a2a; color: #888; padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; }
     .refresh-btn:hover { border-color: #555; color: #f0f0f0; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #555; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -51,7 +64,7 @@
 <header>
   <h1>⚡ Webpulse</h1>
   <div style="display:flex;gap:16px;align-items:center">
-    <span id="last-update">Cargando...</span>
+    <span id="last-update" style="font-size:13px;color:#888">Cargando...</span>
     <button class="refresh-btn" onclick="loadProspects()">↻ Actualizar</button>
   </div>
 </header>
@@ -77,6 +90,23 @@
     <div class="value" id="stat-critical">—</div>
     <div class="sub">score ≥ 7</div>
   </div>
+</div>
+
+<!-- AUDIT FORM -->
+<div class="audit-box">
+  <h2>🔍 Auditar nuevo sitio</h2>
+  <div class="audit-form">
+    <input type="url" id="audit-url" placeholder="https://ejemplo.com" />
+    <select id="audit-sector">
+      <option value="general">General</option>
+      <option value="real_estate">Inmobiliaria</option>
+      <option value="health">Salud / Clínica</option>
+      <option value="restaurant">Restaurante</option>
+      <option value="hotel">Hotel</option>
+    </select>
+    <button id="audit-btn" onclick="runAudit()">⚡ Auditar ahora</button>
+  </div>
+  <div class="audit-result" id="audit-result"></div>
 </div>
 
 <div class="filters">
@@ -109,7 +139,7 @@
       </tr>
     </thead>
     <tbody id="prospects-table">
-      <tr><td colspan="7" class="loading">Cargando prospectos...</td></tr>
+      <tr><td colspan="7" class="empty">Cargando prospectos...</td></tr>
     </tbody>
   </table>
 </div>
@@ -118,25 +148,19 @@
   const API = 'https://webpulse-production-7f4c.up.railway.app'
 
   const RAR_BY_SECTOR = {
-    real_estate: { monthly: 7350, label: 'Inmobiliaria' },
-    health:      { monthly: 3200, label: 'Salud' },
-    restaurant:  { monthly: 840,  label: 'Restaurante' },
-    hotel:       { monthly: 2450, label: 'Hotel' },
-    general:     { monthly: 1575, label: 'General' }
+    real_estate: 7350,
+    health:      3200,
+    restaurant:  840,
+    hotel:       2450,
+    general:     1575
   }
 
-  function scoreClass(score) {
-    if (score >= 7) return 'score-critical'
-    if (score >= 4) return 'score-medium'
-    return 'score-ok'
+  function scoreClass(s) {
+    return s >= 7 ? 'score-critical' : s >= 4 ? 'score-medium' : 'score-ok'
   }
 
-  function statusClass(status) {
-    return 'status-' + (status || 'pending')
-  }
-
-  function productClass(product) {
-    return 'product-' + (product || 'p1').toLowerCase()
+  function rarEstimate(sector, score) {
+    return Math.round((RAR_BY_SECTOR[sector] || 1575) * (score / 10))
   }
 
   function formatDate(iso) {
@@ -144,33 +168,67 @@
     return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
-  function rarEstimate(sector, score) {
-    const bench = RAR_BY_SECTOR[sector] || RAR_BY_SECTOR.general
-    const risk = score / 10
-    return Math.round(bench.monthly * risk)
+  async function runAudit() {
+    const url    = document.getElementById('audit-url').value.trim()
+    const sector = document.getElementById('audit-sector').value
+    const btn    = document.getElementById('audit-btn')
+    const result = document.getElementById('audit-result')
+
+    if (!url) { alert('Ingresa una URL'); return }
+
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Auditando...'
+    result.style.display = 'none'
+
+    try {
+      const res  = await fetch(API + '/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, sector })
+      })
+      const data = await res.json()
+
+      if (data.error) throw new Error(data.error)
+
+      const rar = rarEstimate(sector, data.score)
+      result.className = 'audit-result success'
+      result.style.display = 'block'
+      result.innerHTML = `
+        ✅ <strong>${new URL(url).hostname}</strong> auditado —
+        Score: <strong>${data.score}</strong> |
+        Producto: <strong>${data.product_assigned}</strong> |
+        RAR estimado: <strong>$${rar.toLocaleString()}/mes</strong> |
+        Problemas críticos: <strong>${data.critical_count}</strong>
+      `
+      loadProspects()
+    } catch (err) {
+      result.className = 'audit-result error'
+      result.style.display = 'block'
+      result.innerHTML = '❌ Error: ' + err.message
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = '⚡ Auditar ahora'
+    }
   }
 
   async function loadProspects() {
     const status   = document.getElementById('filter-status').value
     const minScore = document.getElementById('filter-score').value
-
     let url = API + '/api/prospects?'
     if (status)   url += 'status=' + status + '&'
     if (minScore) url += 'min_score=' + minScore
 
     const tbody = document.getElementById('prospects-table')
-    tbody.innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>'
 
     try {
       const res  = await fetch(url)
       const data = await res.json()
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay prospectos aún. Ejecuta tu primer audit.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay prospectos aún.</td></tr>'
         return
       }
 
-      // Stats
       const total    = data.length
       const avgScore = (data.reduce((a, b) => a + (b.score || 0), 0) / total).toFixed(1)
       const totalRAR = data.reduce((a, b) => a + rarEstimate(b.sector, b.score || 0), 0)
@@ -181,38 +239,29 @@
       document.getElementById('stat-rar').textContent      = '$' + totalRAR.toLocaleString()
       document.getElementById('stat-critical').textContent = critical
 
-      // Tabla
       tbody.innerHTML = data.map(p => {
         const rar = rarEstimate(p.sector, p.score || 0)
-        return `
-          <tr>
-            <td>
-              <div class="domain">
-                ${p.domain || p.url}
-                <small>${p.url}</small>
-              </div>
-            </td>
-            <td>${p.sector || 'general'}</td>
-            <td><span class="score-badge ${scoreClass(p.score || 0)}">${p.score || '—'}</span></td>
-            <td class="rar">$${rar.toLocaleString()}/mes</td>
-            <td class="${productClass(p.product_assigned)}">${p.product_assigned || '—'}</td>
-            <td><span class="status-badge ${statusClass(p.status)}">${p.status || 'pending'}</span></td>
-            <td>${formatDate(p.created_at)}</td>
-          </tr>
-        `
+        return `<tr>
+          <td><div class="domain">${p.domain || p.url}<small>${p.url}</small></div></td>
+          <td>${p.sector || 'general'}</td>
+          <td><span class="score-badge ${scoreClass(p.score || 0)}">${p.score || '—'}</span></td>
+          <td class="rar">$${rar.toLocaleString()}/mes</td>
+          <td class="product-${(p.product_assigned||'p1').toLowerCase()}">${p.product_assigned || '—'}</td>
+          <td><span class="status-badge status-${p.status||'pending'}">${p.status || 'pending'}</span></td>
+          <td>${formatDate(p.created_at)}</td>
+        </tr>`
       }).join('')
 
       document.getElementById('last-update').textContent =
         'Actualizado: ' + new Date().toLocaleTimeString('es-CO')
 
     } catch (err) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">Error conectando con la API. Verifica que el servidor esté activo.</td></tr>'
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Error conectando con la API.</td></tr>'
     }
   }
 
   loadProspects()
   setInterval(loadProspects, 30000)
 </script>
-
 </body>
 </html>
