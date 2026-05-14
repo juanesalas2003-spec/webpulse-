@@ -294,8 +294,10 @@
         const data = await res.json()
         if(data.error) throw new Error(data.error)
         logLine.className = 'log-ok'
-        logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${data.score} | ${data.product_assigned} | $${rarEstimate(sector,data.score).toLocaleString()}/mes`
-      } catch(err) {
+        const s = data.score ?? '?'
+const p = data.product_assigned ?? '?'
+const r = data.score ? rarEstimate(sector, data.score) : 0
+logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes`   } catch(err) {
         logLine.className = 'log-err'
         logLine.textContent = `❌ ${url} — ${err.message}`
       }
