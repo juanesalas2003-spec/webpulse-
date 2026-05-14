@@ -36,7 +36,6 @@ app.post('/api/audit', async (req, res) => {
   try {
     const domain = new URL(url).hostname
 
-    // ── Buscar si el dominio ya existe ──
     const { data: existing } = await supabase
       .from('prospects')
       .select('id')
@@ -45,13 +44,11 @@ app.post('/api/audit', async (req, res) => {
 
     let prospect
     if (existing) {
-      // Reutilizar el prospect existente, resetear a pending
       await supabase.from('prospects')
         .update({ url, sector, status: 'pending' })
         .eq('id', existing.id)
       prospect = existing
     } else {
-      // Insertar nuevo prospect
       const { data } = await supabase
         .from('prospects')
         .insert({ url, domain, sector, status: 'pending' })
@@ -84,15 +81,21 @@ app.post('/api/audit', async (req, res) => {
       .update({ score: combinedScore, status: 'audited', product_assigned: product })
       .eq('id', prospect.id)
 
-    let output = null
-    if (product === 'P1') output = generateReport(url, combinedScore, flags, sector, entityDensity, rar)
-    if (product === 'P2') output = generateJsonLD(extracted, sector, domain)
+    // Siempre generar reporte P1
+    const report = generateReport(url, combinedScore, flags, sector, entityDensity, rar)
+    await supabase.from('outputs').insert({
+      prospect_id: prospect.id,
+      product:     'P1',
+      payload:     report
+    })
 
-    if (output) {
+    // Si es P2, también guardar JSON-LD
+    if (product === 'P2') {
+      const jsonld = generateJsonLD(extracted, sector, domain)
       await supabase.from('outputs').insert({
         prospect_id: prospect.id,
-        product,
-        payload: typeof output === 'string' ? { jsonld: output } : output
+        product:     'P2',
+        payload:     typeof jsonld === 'string' ? { jsonld } : jsonld
       })
     }
 
@@ -142,10 +145,10 @@ app.post('/api/audit/batch', async (req, res) => {
       const extracted = await scrapeUrl(url)
       const { score, flags } = scoreAudit(extracted, sector)
       const entityDensity    = scoreEntityDensity(extracted.schema_org, sector)
+      const rar              = calculateRAR(sector, score)
       const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
       const { product }      = routeProduct(combinedScore)
 
-      // Buscar si el dominio ya existe
       const { data: existing } = await supabase
         .from('prospects')
         .select('id')
@@ -167,12 +170,19 @@ app.post('/api/audit/batch', async (req, res) => {
       }
 
       await supabase.from('audits').insert({
-        prospect_id: prospect.id,
+        prospect_id:   prospect.id,
         flags,
-        score: combinedScore,
-        headings: extracted.headings,
-        images_total: extracted.images_alt.length,
+        score:         combinedScore,
+        headings:      extracted.headings,
+        images_total:  extracted.images_alt.length,
         images_no_alt: extracted.images_alt.filter(a => !a?.trim()).length
+      })
+
+      const report = generateReport(url, combinedScore, flags, sector, entityDensity, rar)
+      await supabase.from('outputs').insert({
+        prospect_id: prospect.id,
+        product:     'P1',
+        payload:     report
       })
 
       console.log(`[batch] ${url} → score: ${combinedScore} → producto: ${product}`)
@@ -191,19 +201,23 @@ app.get('/api/prospects', async (req, res) => {
   const { data, error } = await query.limit(100)
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
-})// ─── Obtener reporte de prospect ─────────────────────────
+})
+
+// ─── Obtener reporte de prospect ─────────────────────────
 app.get('/api/prospects/:id/report', async (req, res) => {
   const { id } = req.params
   const { data, error } = await supabase
     .from('outputs')
     .select('*')
     .eq('prospect_id', id)
+    .eq('product', 'P1')
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
   if (error) return res.status(404).json({ error: 'No hay reporte para este prospect' })
   res.json(data)
 })
+
 // ─── Actualizar estado de prospect ───────────────────────
 app.patch('/api/prospects/:id/status', async (req, res) => {
   const { id } = req.params
@@ -218,6 +232,7 @@ app.patch('/api/prospects/:id/status', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
 })
+
 // ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
