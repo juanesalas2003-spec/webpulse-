@@ -231,6 +231,75 @@ app.patch('/api/prospects/:id/status', async (req, res) => {
     .select().single()
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
+})// ─── MercadoPago — crear preferencia de pago ─────────────
+app.post('/api/payment/create', async (req, res) => {
+  const { product, email = 'cliente@webpulse.co', url = '' } = req.body
+
+  const products = {
+    P1: { title: 'Webpulse P1 — Reporte de Auditoría IA', price: 49 },
+    P2: { title: 'Webpulse P2 — JSON-LD Optimizado',      price: 99 },
+    P3: { title: 'Webpulse P3 — Web Completa AI-Ready',   price: 499 },
+    P4: { title: 'Webpulse P4 — Web + Jelou Integrado',   price: 2000 }
+  }
+
+  const item = products[product]
+  if (!item) return res.status(400).json({ error: 'Producto inválido' })
+
+  try {
+    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+        items: [{
+          title:      item.title,
+          quantity:   1,
+          unit_price: item.price,
+          currency_id: 'USD'
+        }],
+        payer: { email },
+        back_urls: {
+          success: `https://webpulse-production-7f4c.up.railway.app/gracias?product=${product}&url=${encodeURIComponent(url)}`,
+          failure: `https://webpulse-production-7f4c.up.railway.app/#precios`,
+          pending: `https://webpulse-production-7f4c.up.railway.app/#precios`
+        },
+        auto_return: 'approved',
+        statement_descriptor: 'WEBPULSE',
+        external_reference: `${product}-${Date.now()}`
+      })
+    })
+
+    const data = await response.json()
+    if (!data.id) throw new Error(data.message || 'Error creando preferencia')
+    res.json({ checkout_url: data.init_point, preference_id: data.id })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ─── Página de gracias ────────────────────────────────────
+app.get('/gracias', (req, res) => {
+  const { product, url } = req.query
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>¡Pago exitoso! — Webpulse</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#f0f0f0;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:48px;text-align:center;max-width:480px}
+h1{font-size:32px;margin-bottom:16px}p{color:#888;margin-bottom:24px;line-height:1.6}
+.badge{display:inline-block;background:#1a3d2e;color:#69db7c;padding:6px 20px;border-radius:20px;font-size:14px;margin-bottom:24px}
+a{background:#6c47ff;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block}</style>
+</head>
+<body><div class="card">
+<div style="font-size:64px;margin-bottom:16px">✅</div>
+<div class="badge">${product} activado</div>
+<h1>¡Pago exitoso!</h1>
+<p>Gracias por confiar en Webpulse. Recibirás tu entregable en menos de 24 horas en el correo registrado.</p>
+<p style="font-size:13px">Sitio auditado: <strong>${url || 'pendiente'}</strong></p>
+<a href="https://webpulse-production-7f4c.up.railway.app">← Volver al inicio</a>
+</div></body></html>`)
 })
 // ─── Prospección automática por sector ───────────────────
 app.post('/api/prospect/search', async (req, res) => {
