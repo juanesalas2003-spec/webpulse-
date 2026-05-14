@@ -59,8 +59,8 @@
     tr.clickable:hover td { background: #1a1a1a; }
     tr.selected td { background: #1a1a2e !important; border-left: 3px solid #6c47ff; }
     .detail-panel { width: 0; overflow: hidden; transition: width 0.3s ease; background: #1a1a1a; border-left: 1px solid #2a2a2a; flex-shrink: 0; }
-    .detail-panel.open { width: 380px; }
-    .detail-inner { width: 380px; padding: 24px; height: 100vh; overflow-y: auto; position: sticky; top: 0; }
+    .detail-panel.open { width: 400px; }
+    .detail-inner { width: 400px; padding: 24px; height: 100vh; overflow-y: auto; position: sticky; top: 0; }
     .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
     .detail-domain { font-size: 16px; font-weight: 700; color: #fff; word-break: break-all; }
     .detail-url { font-size: 11px; color: #555; margin-top: 4px; }
@@ -92,6 +92,9 @@
     .copy-btn.copied { border-color: #69db7c; color: #69db7c; }
     .status-select { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; margin-top: 8px; cursor: pointer; }
     .status-select:focus { outline: none; border-color: #6c47ff; }
+    .report-box { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 16px; font-size: 12px; margin-top: 12px; }
+    .report-section-title { font-weight: 600; margin: 10px 0 4px; }
+    .report-item { color: #ccc; padding: 3px 0; border-bottom: 1px solid #1e1e1e; }
     .score-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .score-critical { background: #3d1a1a; color: #ff6b6b; }
     .score-medium { background: #3d2e1a; color: #ffa94d; }
@@ -136,10 +139,9 @@
 <div class="audit-box">
   <h2>🔍 Auditar sitios</h2>
   <div class="audit-tabs">
-    <button class="audit-tab active" onclick="switchTab('single')">Individual</button>
-    <button class="audit-tab" onclick="switchTab('batch')">Batch (múltiples URLs)</button>
+    <button class="audit-tab active" onclick="switchTab('single',event)">Individual</button>
+    <button class="audit-tab" onclick="switchTab('batch',event)">Batch (múltiples URLs)</button>
   </div>
-
   <div class="tab-content active" id="tab-single">
     <div class="audit-form">
       <input type="url" id="audit-url" placeholder="https://ejemplo.com" />
@@ -154,10 +156,9 @@
     </div>
     <div class="audit-result" id="audit-result"></div>
   </div>
-
   <div class="tab-content" id="tab-batch">
     <div class="batch-form">
-      <textarea id="batch-urls" placeholder="Pega una URL por línea:&#10;https://ejemplo1.com&#10;https://ejemplo2.com&#10;https://ejemplo3.com"></textarea>
+      <textarea id="batch-urls" placeholder="Pega una URL por línea:&#10;https://ejemplo1.com&#10;https://ejemplo2.com"></textarea>
       <div class="batch-row">
         <select id="batch-sector">
           <option value="general">General</option>
@@ -173,9 +174,7 @@
           <span id="batch-status">Procesando...</span>
           <span id="batch-counter">0/0</span>
         </div>
-        <div class="batch-progress-bar-wrap">
-          <div class="batch-progress-bar" id="batch-bar"></div>
-        </div>
+        <div class="batch-progress-bar-wrap"><div class="batch-progress-bar" id="batch-bar"></div></div>
         <div class="batch-log" id="batch-log"></div>
       </div>
     </div>
@@ -202,9 +201,7 @@
   <div class="table-wrap" id="table-wrap">
     <table>
       <thead>
-        <tr>
-          <th>Sitio</th><th>Sector</th><th>Score</th><th>RAR mensual</th><th>Producto</th><th>Estado</th><th>Fecha</th>
-        </tr>
+        <tr><th>Sitio</th><th>Sector</th><th>Score</th><th>RAR mensual</th><th>Producto</th><th>Estado</th><th>Fecha</th></tr>
       </thead>
       <tbody id="prospects-table">
         <tr><td colspan="7" class="empty">Cargando prospectos...</td></tr>
@@ -228,11 +225,11 @@
     return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})
   }
 
-  function switchTab(tab) {
+  function switchTab(tab, e) {
     document.querySelectorAll('.audit-tab').forEach(t=>t.classList.remove('active'))
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'))
     document.getElementById('tab-'+tab).classList.add('active')
-    event.target.classList.add('active')
+    e.target.classList.add('active')
   }
 
   function exportCSV() {
@@ -254,64 +251,111 @@
     URL.revokeObjectURL(url)
   }
 
-  async function runBatch() {
-    const raw = document.getElementById('batch-urls').value.trim()
-    const sector = document.getElementById('batch-sector').value
-    if(!raw){alert('Pega al menos una URL');return}
-    const urls = raw.split('\n').map(u=>u.trim()).filter(u=>u.startsWith('http'))
-    if(!urls.length){alert('No se encontraron URLs válidas (deben empezar con http)');return}
-
-    const btn = document.getElementById('batch-btn')
-    const progress = document.getElementById('batch-progress')
-    const log = document.getElementById('batch-log')
-    const bar = document.getElementById('batch-bar')
-    const counter = document.getElementById('batch-counter')
-    const status = document.getElementById('batch-status')
-
-    btn.disabled = true
-    btn.innerHTML = '<span class="spinner"></span> Procesando...'
-    progress.style.display = 'block'
-    log.innerHTML = ''
-
-    let done = 0
-    for(const url of urls) {
-      counter.textContent = `${done}/${urls.length}`
-      status.textContent = `Auditando ${new URL(url).hostname}...`
-      bar.style.width = `${Math.round((done/urls.length)*100)}%`
-
-      const logLine = document.createElement('div')
-      logLine.className = 'log-info'
-      logLine.textContent = `⏳ ${url}`
-      log.appendChild(logLine)
-      log.scrollTop = log.scrollHeight
-
-      try {
-        const res = await fetch(API+'/api/audit',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({url,sector})
-        })
-        const data = await res.json()
-        if(data.error) throw new Error(data.error)
-        logLine.className = 'log-ok'
-        const s = data.score ?? '?'
-const p = data.product_assigned ?? '?'
-const r = data.score ? rarEstimate(sector, data.score) : 0
-logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes`   } catch(err) {
-        logLine.className = 'log-err'
-        logLine.textContent = `❌ ${url} — ${err.message}`
-      }
-
-      done++
-      log.scrollTop = log.scrollHeight
-      if(done < urls.length) await new Promise(r=>setTimeout(r,1500))
+  async function viewReport(id) {
+    const box = document.getElementById('report-box-'+id)
+    if(!box) return
+    if(box.style.display==='block'){box.style.display='none';return}
+    box.style.display='block'
+    box.innerHTML='<div style="color:#888;font-size:13px;padding:10px 0">Cargando reporte...</div>'
+    try {
+      const res=await fetch(API+'/api/prospects/'+id+'/report')
+      const data=await res.json()
+      if(data.error) throw new Error(data.error)
+      const r=data.payload
+      box.innerHTML=`
+        <div class="report-box">
+          <div style="color:#ffd43b;font-weight:700;margin-bottom:8px">📊 ${r.diagnosis?.verdict||'Reporte'} — Score ${r.diagnosis?.score}</div>
+          <div style="color:#888;margin-bottom:12px;font-size:12px">${r.diagnosis?.summary||''}</div>
+          <div class="report-section-title" style="color:#ff6b6b">🔴 Críticos (${r.technical_issues?.critical?.length||0})</div>
+          ${(r.technical_issues?.critical||[]).map(f=>`<div class="report-item">• ${f.problema}</div>`).join('')}
+          <div class="report-section-title" style="color:#ffa94d;margin-top:8px">🟡 Medios (${r.technical_issues?.medium?.length||0})</div>
+          ${(r.technical_issues?.medium||[]).map(f=>`<div class="report-item">• ${f.problema}</div>`).join('')}
+          <div class="report-section-title" style="color:#69db7c;margin-top:8px">💰 Revenue en riesgo</div>
+          <div style="color:#ccc;font-size:12px">${r.revenue_at_risk?.headline||'Sin datos'}</div>
+          <div class="report-section-title" style="color:#74c0fc;margin-top:8px">✅ Solución</div>
+          <div style="color:#ccc;font-size:12px">${r.solution?.recommended_product||''}</div>
+          <div style="color:#888;font-size:11px;margin-top:4px">${r.solution?.next_step||''}</div>
+          <button class="copy-btn" onclick="copyReport('${id}')">📋 Copiar reporte para WhatsApp</button>
+        </div>`
+    } catch(err) {
+      box.innerHTML='<div style="color:#ff6b6b;font-size:12px;padding:8px 0">❌ '+err.message+'</div>'
     }
+  }
 
-    bar.style.width = '100%'
-    counter.textContent = `${done}/${urls.length}`
-    status.textContent = `Completado — ${done} sitios procesados`
-    btn.disabled = false
-    btn.innerHTML = '⚡ Auditar todo'
+  async function copyReport(id) {
+    const p=currentData.find(x=>x.id===id)
+    if(!p) return
+    try {
+      const res=await fetch(API+'/api/prospects/'+id+'/report')
+      const data=await res.json()
+      const r=data.payload
+      const text=`🔍 *Análisis Webpulse — ${p.domain}*
+Score IA: *${r.diagnosis?.score}/10* (${r.diagnosis?.verdict})
+${r.diagnosis?.summary}
+
+🔴 *Problemas críticos:*
+${(r.technical_issues?.critical||[]).map(f=>'• '+f.problema).join('\n')}
+
+💰 *Revenue en riesgo:*
+${r.revenue_at_risk?.headline||''}
+
+✅ *Solución recomendada:*
+${r.solution?.recommended_product||''}
+
+${r.solution?.next_step||''}`
+      await navigator.clipboard.writeText(text)
+      alert('✅ Reporte copiado — listo para pegar en WhatsApp')
+    } catch(err) { alert('Error: '+err.message) }
+  }
+
+  async function runBatch() {
+    const raw=document.getElementById('batch-urls').value.trim()
+    const sector=document.getElementById('batch-sector').value
+    if(!raw){alert('Pega al menos una URL');return}
+    const urls=raw.split('\n').map(u=>u.trim()).filter(u=>u.startsWith('http'))
+    if(!urls.length){alert('No se encontraron URLs válidas');return}
+    const btn=document.getElementById('batch-btn')
+    const progress=document.getElementById('batch-progress')
+    const log=document.getElementById('batch-log')
+    const bar=document.getElementById('batch-bar')
+    const counter=document.getElementById('batch-counter')
+    const status=document.getElementById('batch-status')
+    btn.disabled=true
+    btn.innerHTML='<span class="spinner"></span> Procesando...'
+    progress.style.display='block'
+    log.innerHTML=''
+    let done=0
+    for(const url of urls) {
+      counter.textContent=`${done}/${urls.length}`
+      status.textContent=`Auditando ${new URL(url).hostname}...`
+      bar.style.width=`${Math.round((done/urls.length)*100)}%`
+      const logLine=document.createElement('div')
+      logLine.className='log-info'
+      logLine.textContent=`⏳ ${url}`
+      log.appendChild(logLine)
+      log.scrollTop=log.scrollHeight
+      try {
+        const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})})
+        const data=await res.json()
+        if(data.error) throw new Error(data.error)
+        const s=data.score??'?'
+        const p=data.product_assigned??'?'
+        const r=data.score?rarEstimate(sector,data.score):0
+        logLine.className='log-ok'
+        logLine.textContent=`✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes`
+      } catch(err) {
+        logLine.className='log-err'
+        logLine.textContent=`❌ ${url} — ${err.message}`
+      }
+      done++
+      log.scrollTop=log.scrollHeight
+      if(done<urls.length) await new Promise(r=>setTimeout(r,1500))
+    }
+    bar.style.width='100%'
+    counter.textContent=`${done}/${urls.length}`
+    status.textContent=`Completado — ${done} sitios procesados`
+    btn.disabled=false
+    btn.innerHTML='⚡ Auditar todo'
     loadProspects()
   }async function runAudit() {
     const url=document.getElementById('audit-url').value.trim()
@@ -393,8 +437,10 @@ logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${
       <div class="detail-section">
         <h3>Acciones</h3>
         <button class="copy-btn" id="copy-btn-${p.id}" onclick="copyProspectInfo('${p.id}')">📋 Copiar resumen para contacto</button>
+        <button class="copy-btn" onclick="viewReport('${p.id}')">📄 Ver reporte completo</button>
         <button class="copy-btn" onclick="window.open('${p.url}','_blank')">🌐 Abrir sitio web</button>
-      </div>`
+      </div>
+      <div id="report-box-${p.id}"></div>`
     document.getElementById('detail-panel').classList.add('open')
     document.getElementById('table-wrap').classList.add('with-detail')
     document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'))
@@ -408,17 +454,13 @@ logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${
     selectedId=null
   }
 
-  async function updateStatus(id, status) {
+  async function updateStatus(id,status) {
     try {
-      await fetch(API+'/api/prospects/'+id+'/status',{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({status})
-      })
-      const p = currentData.find(x=>x.id===id)
-      if(p) p.status = status
+      await fetch(API+'/api/prospects/'+id+'/status',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})})
+      const p=currentData.find(x=>x.id===id)
+      if(p) p.status=status
       loadProspects()
-    } catch(err) { alert('Error actualizando estado: '+err.message) }
+    } catch(err){alert('Error: '+err.message)}
   }
 
   function copyProspectInfo(id) {
@@ -469,7 +511,7 @@ logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${
         </tr>`
       }).join('')
       document.getElementById('last-update').textContent='Actualizado: '+new Date().toLocaleTimeString('es-CO')
-    } catch(err) {
+    } catch(err){
       tbody.innerHTML='<tr><td colspan="7" class="empty">Error conectando con la API.</td></tr>'
     }
   }
