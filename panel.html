@@ -16,6 +16,11 @@
     .stat .sub { font-size: 12px; color: #555; margin-top: 4px; }
     .audit-box { margin: 24px 40px 0; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; }
     .audit-box h2 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #ccc; }
+    .audit-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .audit-tab { background: none; border: 1px solid #2a2a2a; color: #888; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .audit-tab.active { background: #6c47ff; border-color: #6c47ff; color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
     .audit-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .audit-form input { flex: 1; min-width: 260px; background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
     .audit-form input:focus { outline: none; border-color: #6c47ff; }
@@ -26,6 +31,21 @@
     .audit-result { margin-top: 16px; padding: 14px; background: #0f0f0f; border-radius: 8px; font-size: 13px; display: none; }
     .audit-result.success { border: 1px solid #1a3d2e; color: #69db7c; }
     .audit-result.error { border: 1px solid #3d1a1a; color: #ff6b6b; }
+    .batch-form { display: flex; flex-direction: column; gap: 12px; }
+    .batch-form textarea { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 12px 14px; border-radius: 8px; font-size: 13px; font-family: monospace; resize: vertical; min-height: 100px; }
+    .batch-form textarea:focus { outline: none; border-color: #6c47ff; }
+    .batch-row { display: flex; gap: 12px; align-items: center; }
+    .batch-row select { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+    .batch-row button { background: #6c47ff; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+    .batch-row button:hover { background: #5a38e0; }
+    .batch-row button:disabled { background: #333; color: #666; cursor: default; }
+    .batch-progress { margin-top: 14px; display: none; }
+    .batch-progress-bar-wrap { background: #2a2a2a; border-radius: 4px; height: 6px; margin-bottom: 10px; overflow: hidden; }
+    .batch-progress-bar { height: 6px; background: #6c47ff; border-radius: 4px; transition: width 0.4s; width: 0%; }
+    .batch-log { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; font-size: 12px; font-family: monospace; max-height: 160px; overflow-y: auto; }
+    .batch-log .log-ok { color: #69db7c; }
+    .batch-log .log-err { color: #ff6b6b; }
+    .batch-log .log-info { color: #888; }
     .filters { padding: 16px 40px 0; display: flex; gap: 12px; align-items: center; }
     .filters select { background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
     .filters button { background: #6c47ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; }
@@ -70,6 +90,8 @@
     .copy-btn { width: 100%; background: #0f0f0f; border: 1px solid #2a2a2a; color: #ccc; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-top: 8px; }
     .copy-btn:hover { border-color: #6c47ff; color: #fff; }
     .copy-btn.copied { border-color: #69db7c; color: #69db7c; }
+    .status-select { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; margin-top: 8px; cursor: pointer; }
+    .status-select:focus { outline: none; border-color: #6c47ff; }
     .score-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .score-critical { background: #3d1a1a; color: #ff6b6b; }
     .score-medium { background: #3d2e1a; color: #ffa94d; }
@@ -112,19 +134,52 @@
 </div>
 
 <div class="audit-box">
-  <h2>🔍 Auditar nuevo sitio</h2>
-  <div class="audit-form">
-    <input type="url" id="audit-url" placeholder="https://ejemplo.com" />
-    <select id="audit-sector">
-      <option value="general">General</option>
-      <option value="real_estate">Inmobiliaria</option>
-      <option value="health">Salud / Clínica</option>
-      <option value="restaurant">Restaurante</option>
-      <option value="hotel">Hotel</option>
-    </select>
-    <button id="audit-btn" onclick="runAudit()">⚡ Auditar ahora</button>
+  <h2>🔍 Auditar sitios</h2>
+  <div class="audit-tabs">
+    <button class="audit-tab active" onclick="switchTab('single')">Individual</button>
+    <button class="audit-tab" onclick="switchTab('batch')">Batch (múltiples URLs)</button>
   </div>
-  <div class="audit-result" id="audit-result"></div>
+
+  <div class="tab-content active" id="tab-single">
+    <div class="audit-form">
+      <input type="url" id="audit-url" placeholder="https://ejemplo.com" />
+      <select id="audit-sector">
+        <option value="general">General</option>
+        <option value="real_estate">Inmobiliaria</option>
+        <option value="health">Salud / Clínica</option>
+        <option value="restaurant">Restaurante</option>
+        <option value="hotel">Hotel</option>
+      </select>
+      <button id="audit-btn" onclick="runAudit()">⚡ Auditar ahora</button>
+    </div>
+    <div class="audit-result" id="audit-result"></div>
+  </div>
+
+  <div class="tab-content" id="tab-batch">
+    <div class="batch-form">
+      <textarea id="batch-urls" placeholder="Pega una URL por línea:&#10;https://ejemplo1.com&#10;https://ejemplo2.com&#10;https://ejemplo3.com"></textarea>
+      <div class="batch-row">
+        <select id="batch-sector">
+          <option value="general">General</option>
+          <option value="real_estate">Inmobiliaria</option>
+          <option value="health">Salud / Clínica</option>
+          <option value="restaurant">Restaurante</option>
+          <option value="hotel">Hotel</option>
+        </select>
+        <button id="batch-btn" onclick="runBatch()">⚡ Auditar todo</button>
+      </div>
+      <div class="batch-progress" id="batch-progress">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:6px">
+          <span id="batch-status">Procesando...</span>
+          <span id="batch-counter">0/0</span>
+        </div>
+        <div class="batch-progress-bar-wrap">
+          <div class="batch-progress-bar" id="batch-bar"></div>
+        </div>
+        <div class="batch-log" id="batch-log"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="filters">
@@ -173,6 +228,13 @@
     return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})
   }
 
+  function switchTab(tab) {
+    document.querySelectorAll('.audit-tab').forEach(t=>t.classList.remove('active'))
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'))
+    document.getElementById('tab-'+tab).classList.add('active')
+    event.target.classList.add('active')
+  }
+
   function exportCSV() {
     if(!currentData.length){alert('No hay datos para exportar');return}
     const headers=['Dominio','URL','Sector','Score','RAR_mensual_USD','Producto','Estado','Fecha']
@@ -190,6 +252,91 @@
     a.download=`webpulse_prospects_${new Date().toISOString().slice(0,10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function runBatch() {
+    const raw = document.getElementById('batch-urls').value.trim()
+    const sector = document.getElementById('batch-sector').value
+    if(!raw){alert('Pega al menos una URL');return}
+    const urls = raw.split('\n').map(u=>u.trim()).filter(u=>u.startsWith('http'))
+    if(!urls.length){alert('No se encontraron URLs válidas (deben empezar con http)');return}
+
+    const btn = document.getElementById('batch-btn')
+    const progress = document.getElementById('batch-progress')
+    const log = document.getElementById('batch-log')
+    const bar = document.getElementById('batch-bar')
+    const counter = document.getElementById('batch-counter')
+    const status = document.getElementById('batch-status')
+
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Procesando...'
+    progress.style.display = 'block'
+    log.innerHTML = ''
+
+    let done = 0
+    for(const url of urls) {
+      counter.textContent = `${done}/${urls.length}`
+      status.textContent = `Auditando ${new URL(url).hostname}...`
+      bar.style.width = `${Math.round((done/urls.length)*100)}%`
+
+      const logLine = document.createElement('div')
+      logLine.className = 'log-info'
+      logLine.textContent = `⏳ ${url}`
+      log.appendChild(logLine)
+      log.scrollTop = log.scrollHeight
+
+      try {
+        const res = await fetch(API+'/api/audit',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({url,sector})
+        })
+        const data = await res.json()
+        if(data.error) throw new Error(data.error)
+        logLine.className = 'log-ok'
+        logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${data.score} | ${data.product_assigned} | $${rarEstimate(sector,data.score).toLocaleString()}/mes`
+      } catch(err) {
+        logLine.className = 'log-err'
+        logLine.textContent = `❌ ${url} — ${err.message}`
+      }
+
+      done++
+      log.scrollTop = log.scrollHeight
+      if(done < urls.length) await new Promise(r=>setTimeout(r,1500))
+    }
+
+    bar.style.width = '100%'
+    counter.textContent = `${done}/${urls.length}`
+    status.textContent = `Completado — ${done} sitios procesados`
+    btn.disabled = false
+    btn.innerHTML = '⚡ Auditar todo'
+    loadProspects()
+  }async function runAudit() {
+    const url=document.getElementById('audit-url').value.trim()
+    const sector=document.getElementById('audit-sector').value
+    const btn=document.getElementById('audit-btn')
+    const result=document.getElementById('audit-result')
+    if(!url){alert('Ingresa una URL');return}
+    btn.disabled=true
+    btn.innerHTML='<span class="spinner"></span> Auditando...'
+    result.style.display='none'
+    try {
+      const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})})
+      const data=await res.json()
+      if(data.error) throw new Error(data.error)
+      const rar=rarEstimate(sector,data.score)
+      result.className='audit-result success'
+      result.style.display='block'
+      result.innerHTML=`✅ <strong>${new URL(url).hostname}</strong> auditado — Score: <strong>${data.score}</strong> | Producto: <strong>${data.product_assigned}</strong> | RAR: <strong>$${rar.toLocaleString()}/mes</strong> | Críticos: <strong>${data.critical_count}</strong>`
+      loadProspects()
+    } catch(err) {
+      result.className='audit-result error'
+      result.style.display='block'
+      result.innerHTML='❌ Error: '+err.message
+    } finally {
+      btn.disabled=false
+      btn.innerHTML='⚡ Auditar ahora'
+    }
   }
 
   function openDetail(p) {
@@ -229,6 +376,15 @@
         </div>
       </div>
       <div class="detail-section">
+        <h3>Cambiar estado</h3>
+        <select class="status-select" onchange="updateStatus('${p.id}',this.value)">
+          <option value="pending" ${p.status==='pending'?'selected':''}>Pendiente</option>
+          <option value="audited" ${p.status==='audited'?'selected':''}>Auditado</option>
+          <option value="contacted" ${p.status==='contacted'?'selected':''}>Contactado</option>
+          <option value="delivered" ${p.status==='delivered'?'selected':''}>Entregado</option>
+        </select>
+      </div>
+      <div class="detail-section">
         <h3>Problemas detectados (${flags.length})</h3>
         ${flagsHtml}
       </div>
@@ -250,6 +406,19 @@
     selectedId=null
   }
 
+  async function updateStatus(id, status) {
+    try {
+      await fetch(API+'/api/prospects/'+id+'/status',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({status})
+      })
+      const p = currentData.find(x=>x.id===id)
+      if(p) p.status = status
+      loadProspects()
+    } catch(err) { alert('Error actualizando estado: '+err.message) }
+  }
+
   function copyProspectInfo(id) {
     const p=currentData.find(x=>x.id===id)
     if(!p) return
@@ -262,34 +431,6 @@
       if(btn){btn.textContent='✅ Copiado!';btn.classList.add('copied');
         setTimeout(()=>{btn.textContent='📋 Copiar resumen para contacto';btn.classList.remove('copied')},2000)}
     })
-  }
-
-  async function runAudit() {
-    const url=document.getElementById('audit-url').value.trim()
-    const sector=document.getElementById('audit-sector').value
-    const btn=document.getElementById('audit-btn')
-    const result=document.getElementById('audit-result')
-    if(!url){alert('Ingresa una URL');return}
-    btn.disabled=true
-    btn.innerHTML='<span class="spinner"></span> Auditando...'
-    result.style.display='none'
-    try {
-      const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})})
-      const data=await res.json()
-      if(data.error) throw new Error(data.error)
-      const rar=rarEstimate(sector,data.score)
-      result.className='audit-result success'
-      result.style.display='block'
-      result.innerHTML=`✅ <strong>${new URL(url).hostname}</strong> auditado — Score: <strong>${data.score}</strong> | Producto: <strong>${data.product_assigned}</strong> | RAR estimado: <strong>$${rar.toLocaleString()}/mes</strong> | Problemas críticos: <strong>${data.critical_count}</strong>`
-      loadProspects()
-    } catch(err) {
-      result.className='audit-result error'
-      result.style.display='block'
-      result.innerHTML='❌ Error: '+err.message
-    } finally {
-      btn.disabled=false
-      btn.innerHTML='⚡ Auditar ahora'
-    }
   }
 
   async function loadProspects() {
