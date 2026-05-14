@@ -191,6 +191,18 @@ app.get('/api/prospects', async (req, res) => {
   const { data, error } = await query.limit(100)
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
+})// ─── Obtener reporte de prospect ─────────────────────────
+app.get('/api/prospects/:id/report', async (req, res) => {
+  const { id } = req.params
+  const { data, error } = await supabase
+    .from('outputs')
+    .select('*')
+    .eq('prospect_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+  if (error) return res.status(404).json({ error: 'No hay reporte para este prospect' })
+  res.json(data)
 })
 // ─── Actualizar estado de prospect ───────────────────────
 app.patch('/api/prospects/:id/status', async (req, res) => {
