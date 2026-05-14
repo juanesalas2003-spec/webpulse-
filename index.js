@@ -36,10 +36,28 @@ app.post('/api/audit', async (req, res) => {
   try {
     const domain = new URL(url).hostname
 
-    const { data: prospect } = await supabase
+    // ── Buscar si el dominio ya existe ──
+    const { data: existing } = await supabase
       .from('prospects')
-      .insert({ url, domain, sector, status: 'pending' })
-      .select().single()
+      .select('id')
+      .eq('domain', domain)
+      .maybeSingle()
+
+    let prospect
+    if (existing) {
+      // Reutilizar el prospect existente, resetear a pending
+      await supabase.from('prospects')
+        .update({ url, sector, status: 'pending' })
+        .eq('id', existing.id)
+      prospect = existing
+    } else {
+      // Insertar nuevo prospect
+      const { data } = await supabase
+        .from('prospects')
+        .insert({ url, domain, sector, status: 'pending' })
+        .select().single()
+      prospect = data
+    }
 
     console.log(`[audit] Scraping ${url}...`)
     const extracted = await scrapeUrl(url)
@@ -127,10 +145,26 @@ app.post('/api/audit/batch', async (req, res) => {
       const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
       const { product }      = routeProduct(combinedScore)
 
-      const { data: prospect } = await supabase
+      // Buscar si el dominio ya existe
+      const { data: existing } = await supabase
         .from('prospects')
-        .insert({ url, domain, sector, score: combinedScore, status: 'audited', product_assigned: product })
-        .select().single()
+        .select('id')
+        .eq('domain', domain)
+        .maybeSingle()
+
+      let prospect
+      if (existing) {
+        await supabase.from('prospects')
+          .update({ url, sector, score: combinedScore, status: 'audited', product_assigned: product })
+          .eq('id', existing.id)
+        prospect = existing
+      } else {
+        const { data } = await supabase
+          .from('prospects')
+          .insert({ url, domain, sector, score: combinedScore, status: 'audited', product_assigned: product })
+          .select().single()
+        prospect = data
+      }
 
       await supabase.from('audits').insert({
         prospect_id: prospect.id,
