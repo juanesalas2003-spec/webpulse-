@@ -22,7 +22,10 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type')
   next()
 })
-
+// ─── Landing page ─────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.send(readFileSync(join(__dirname, 'landing.html'), 'utf8'))
+})
 // ─── Panel de administración ─────────────────────────────
 app.get('/panel', (req, res) => {
   res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))

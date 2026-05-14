@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webpulse — Tu sitio web invisible para las IAs te está costando dinero</title>
+  <meta name="description" content="Audita tu sitio web gratis y descubre cuánto dinero estás perdiendo por no aparecer en ChatGPT, Gemini y Perplexity.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #f0f0f0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav { background: #111; border-bottom: 1px solid #1e1e1e; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 20px; font-weight: 800; color: #fff; }
+    .nav-logo span { color: #6c47ff; }
+    .nav-cta { background: #6c47ff; color: #fff; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+    .nav-cta:hover { background: #5a38e0; }
+
+    /* HERO */
+    .hero { padding: 80px 40px 60px; text-align: center; max-width: 800px; margin: 0 auto; }
+    .hero-badge { display: inline-block; background: #1a1a2e; color: #b197fc; border: 1px solid #2a2a4e; padding: 6px 18px; border-radius: 20px; font-size: 13px; margin-bottom: 24px; }
+    .hero h1 { font-size: 48px; font-weight: 800; line-height: 1.15; margin-bottom: 20px; }
+    .hero h1 span { color: #6c47ff; }
+    .hero p { font-size: 18px; color: #888; line-height: 1.7; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+    /* AUDIT WIDGET */
+    .audit-widget { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 32px; max-width: 640px; margin: 0 auto 80px; }
+    .audit-widget h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .audit-widget p { font-size: 14px; color: #888; margin-bottom: 20px; }
+    .audit-input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .audit-input-row input { flex: 1; min-width: 200px; background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 12px 16px; border-radius: 8px; font-size: 14px; }
+    .audit-input-row input:focus { outline: none; border-color: #6c47ff; }
+    .audit-input-row select { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 12px 16px; border-radius: 8px; font-size: 14px; }
+    .audit-input-row button { background: #6c47ff; color: #fff; border: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .audit-input-row button:hover { background: #5a38e0; }
+    .audit-input-row button:disabled { background: #333; color: #666; cursor: default; }
+    .audit-result-box { margin-top: 20px; padding: 20px; background: #0f0f0f; border-radius: 12px; display: none; }
+    .audit-result-box.show { display: block; }
+    .result-score { font-size: 48px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+    .result-label { text-align: center; font-size: 14px; color: #888; margin-bottom: 20px; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .result-card { background: #1a1a1a; border-radius: 8px; padding: 14px; text-align: center; }
+    .result-card .rc-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 6px; }
+    .result-card .rc-value { font-size: 20px; font-weight: 700; }
+    .result-issues { margin-bottom: 20px; }
+    .result-issue { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e1e1e; font-size: 13px; color: #ccc; }
+    .issue-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .issue-dot.critical { background: #ff6b6b; }
+    .issue-dot.medium { background: #ffa94d; }
+    .result-cta { background: #6c47ff; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; }
+    .result-cta:hover { background: #5a38e0; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #555; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* STATS */
+    .stats-bar { background: #111; border-top: 1px solid #1e1e1e; border-bottom: 1px solid #1e1e1e; padding: 40px; display: flex; justify-content: center; gap: 80px; flex-wrap: wrap; }
+    .stat-item { text-align: center; }
+    .stat-item .num { font-size: 36px; font-weight: 800; color: #6c47ff; }
+    .stat-item .lbl { font-size: 13px; color: #888; margin-top: 4px; }
+
+    /* HOW */
+    .how { padding: 80px 40px; max-width: 900px; margin: 0 auto; }
+    .section-title { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+    .section-sub { text-align: center; color: #888; font-size: 16px; margin-bottom: 48px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .step { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 24px; }
+    .step-num { font-size: 12px; color: #6c47ff; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+    .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .step p { font-size: 13px; color: #888; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">web<span>pulse</span></div>
+  <button class="nav-cta" onclick="document.getElementById('audit-section').scrollIntoView({behavior:'smooth'})">Auditar mi sitio gratis</button>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">🤖 Optimización para IA — ChatGPT · Gemini · Perplexity</div>
+  <h1>Tu sitio web es <span>invisible</span> para las IAs y te está costando dinero</h1>
+  <p>El 73% de los sitios web en Colombia no aparecen cuando los clientes buscan en inteligencia artificial. Audita el tuyo gratis en 60 segundos.</p>
+</section>
+
+<section id="audit-section" class="audit-widget">
+  <h2>🔍 Auditoría gratuita</h2>
+  <p>Ingresa tu URL y descubre tu Score de visibilidad IA en segundos</p>
+  <div class="audit-input-row">
+    <input type="url" id="hero-url" placeholder="https://tunegocio.com" />
+    <select id="hero-sector">
+      <option value="general">General</option>
+      <option value="real_estate">Inmobiliaria</option>
+      <option value="health">Salud / Clínica</option>
+      <option value="restaurant">Restaurante</option>
+      <option value="hotel">Hotel</option>
+    </select>
+    <button id="hero-btn" onclick="runHeroAudit()">⚡ Auditar gratis</button>
+  </div>
+  <div class="audit-result-box" id="hero-result"></div>
+</section>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="num">+500</div><div class="lbl">Sitios auditados</div></div>
+  <div class="stat-item"><div class="num">8.2</div><div class="lbl">Score promedio (crítico)</div></div>
+  <div class="stat-item"><div class="num">$1.2K</div><div class="lbl">RAR promedio/mes</div></div>
+  <div class="stat-item"><div class="num">24h</div><div class="lbl">Tiempo de entrega</div></div>
+</div>
+
+<section class="how">
+  <div class="section-title">¿Cómo funciona?</div>
+  <div class="section-sub">En 3 pasos pasas de invisible a recomendado por las IAs</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">Paso 01</div>
+      <h3>Auditoría gratuita</h3>
+      <p>Analizamos 10 señales técnicas de tu sitio web y calculamos tu Score de visibilidad IA en tiempo real.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">Paso 02</div>
+      <h3>Reporte + solución</h3>
+      <p>Recibes un reporte detallado con los problemas encontrados y el producto exacto para solucionarlos.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">Paso 03</div>
+      <h3>Implementación en 24h</h3>
+      <p>Nuestro equipo aplica la solución y tu sitio comienza a aparecer en las respuestas de IA.</p>
+    </div>
+  </div>
+</section><!-- PRICING -->
+<section id="precios" style="padding:80px 40px;max-width:1000px;margin:0 auto">
+  <div class="section-title">Planes y precios</div>
+  <div class="section-sub">Elige el nivel de optimización que necesita tu negocio</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;flex-wrap:wrap">
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:28px;display:flex;flex-direction:column">
+      <div style="font-size:12px;color:#888;text-transform:uppercase;margin-bottom:12px">P1</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:8px">Reporte IA</div>
+      <div style="font-size:36px;font-weight:800;color:#6c47ff;margin-bottom:4px">$49</div>
+      <div style="font-size:12px;color:#555;margin-bottom:20px">USD · pago único</div>
+      <ul style="list-style:none;font-size:13px;color:#888;line-height:2;flex:1">
+        <li>✅ Score de visibilidad IA</li>
+        <li>✅ 10 señales auditadas</li>
+        <li>✅ Mapa de entidades</li>
+        <li>✅ Revenue at Risk calculado</li>
+        <li>✅ Plan de acción detallado</li>
+        <li>✅ Entrega en 24h</li>
+      </ul>
+      <button onclick="openPayment('P1')" style="margin-top:20px;background:#6c47ff;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%">Comprar P1 →</button>
+    </div>
+
+    <div style="background:#1a1a1a;border:2px solid #6c47ff;border-radius:16px;padding:28px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#6c47ff;color:#fff;padding:4px 16px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">MÁS POPULAR</div>
+      <div style="font-size:12px;color:#888;text-transform:uppercase;margin-bottom:12px">P2</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:8px">JSON-LD Pro</div>
+      <div style="font-size:36px;font-weight:800;color:#6c47ff;margin-bottom:4px">$99</div>
+      <div style="font-size:12px;color:#555;margin-bottom:20px">USD · pago único</div>
+      <ul style="list-style:none;font-size:13px;color:#888;line-height:2;flex:1">
+        <li>✅ Todo lo de P1</li>
+        <li>✅ JSON-LD completo</li>
+        <li>✅ Schema.org optimizado</li>
+        <li>✅ LocalBusiness configurado</li>
+        <li>✅ Instrucciones de instalación</li>
+        <li>✅ Garantía 30 días</li>
+      </ul>
+      <button onclick="openPayment('P2')" style="margin-top:20px;background:#6c47ff;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%">Comprar P2 →</button>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:28px;display:flex;flex-direction:column">
+      <div style="font-size:12px;color:#888;text-transform:uppercase;margin-bottom:12px">P3</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:8px">Web AI-Ready</div>
+      <div style="font-size:36px;font-weight:800;color:#b197fc;margin-bottom:4px">$499</div>
+      <div style="font-size:12px;color:#555;margin-bottom:20px">USD · pago único</div>
+      <ul style="list-style:none;font-size:13px;color:#888;line-height:2;flex:1">
+        <li>✅ Todo lo de P2</li>
+        <li>✅ Rediseño completo</li>
+        <li>✅ Contenido optimizado IA</li>
+        <li>✅ Velocidad y Core Web Vitals</li>
+        <li>✅ SEO técnico completo</li>
+        <li>✅ Soporte 60 días</li>
+      </ul>
+      <button onclick="openPayment('P3')" style="margin-top:20px;background:#2a2a3a;color:#b197fc;border:1px solid #3a3a5a;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%">Comprar P3 →</button>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:28px;display:flex;flex-direction:column">
+      <div style="font-size:12px;color:#888;text-transform:uppercase;margin-bottom:12px">P4</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:8px">Web + Jelou</div>
+      <div style="font-size:36px;font-weight:800;color:#ffd43b;margin-bottom:4px">$2.000</div>
+      <div style="font-size:12px;color:#555;margin-bottom:20px">USD + $200/mes</div>
+      <ul style="list-style:none;font-size:13px;color:#888;line-height:2;flex:1">
+        <li>✅ Todo lo de P3</li>
+        <li>✅ Agente WhatsApp 24/7</li>
+        <li>✅ Automatización de ventas</li>
+        <li>✅ CRM integrado</li>
+        <li>✅ Reportes mensuales</li>
+        <li>✅ Soporte ilimitado</li>
+      </ul>
+      <button onclick="openPayment('P4')" style="margin-top:20px;background:#2a2a1a;color:#ffd43b;border:1px solid #3a3a1a;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%">Comprar P4 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- PAYMENT MODAL -->
+<div id="payment-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:40px;max-width:440px;width:90%;position:relative">
+    <button onclick="closePayment()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#555;font-size:24px;cursor:pointer">✕</button>
+    <h2 style="font-size:20px;margin-bottom:8px" id="modal-title">Completar compra</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:24px" id="modal-desc">Serás redirigido a MercadoPago</p>
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;color:#888;display:block;margin-bottom:6px">Tu sitio web</label>
+      <input type="url" id="modal-url" placeholder="https://tunegocio.com" style="width:100%;background:#0f0f0f;border:1px solid #2a2a2a;color:#f0f0f0;padding:10px 14px;border-radius:8px;font-size:14px" />
+    </div>
+    <div style="margin-bottom:24px">
+      <label style="font-size:13px;color:#888;display:block;margin-bottom:6px">Tu email</label>
+      <input type="email" id="modal-email" placeholder="tu@email.com" style="width:100%;background:#0f0f0f;border:1px solid #2a2a2a;color:#f0f0f0;padding:10px 14px;border-radius:8px;font-size:14px" />
+    </div>
+    <button id="modal-pay-btn" onclick="processPayment()" style="width:100%;background:#6c47ff;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">💳 Pagar con MercadoPago</button>
+    <p style="text-align:center;font-size:11px;color:#555;margin-top:12px">🔒 Pago seguro · SSL · MercadoPago</p>
+  </div>
+</div><!-- FAQ -->
+<section style="padding:80px 40px;max-width:700px;margin:0 auto">
+  <div class="section-title">Preguntas frecuentes</div>
+  <div class="section-sub">Todo lo que necesitas saber antes de comprar</div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <details style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:20px;cursor:pointer">
+      <summary style="font-weight:600;font-size:15px;list-style:none">¿Qué es el Score de visibilidad IA?</summary>
+      <p style="margin-top:12px;color:#888;font-size:14px;line-height:1.7">Es una puntuación del 1 al 10 que mide qué tan preparado está tu sitio para ser encontrado y recomendado por ChatGPT, Gemini, Perplexity y otros modelos de IA. Un score mayor a 7 es crítico.</p>
+    </details>
+    <details style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:20px;cursor:pointer">
+      <summary style="font-weight:600;font-size:15px;list-style:none">¿Qué es el Revenue at Risk (RAR)?</summary>
+      <p style="margin-top:12px;color:#888;font-size:14px;line-height:1.7">Es el dinero que estás dejando de ganar cada mes porque tu sitio no aparece en las búsquedas de IA. Lo calculamos basado en el tráfico estimado de tu sector y tu score actual.</p>
+    </details>
+    <details style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:20px;cursor:pointer">
+      <summary style="font-weight:600;font-size:15px;list-style:none">¿En cuánto tiempo recibo mi entregable?</summary>
+      <p style="margin-top:12px;color:#888;font-size:14px;line-height:1.7">Máximo 24 horas después de confirmado el pago. Para P1 y P2 generalmente es inmediato. Para P3 y P4 nos contactamos contigo para coordinar los detalles.</p>
+    </details>
+    <details style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:20px;cursor:pointer">
+      <summary style="font-weight:600;font-size:15px;list-style:none">¿Necesito conocimientos técnicos?</summary>
+      <p style="margin-top:12px;color:#888;font-size:14px;line-height:1.7">No. Para P1 recibes el reporte con instrucciones claras. Para P2 te entregamos el código listo con instrucciones paso a paso. Para P3 y P4 nosotros implementamos todo.</p>
+    </details>
+    <details style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:20px;cursor:pointer">
+      <summary style="font-weight:600;font-size:15px;list-style:none">¿Tiene garantía?</summary>
+      <p style="margin-top:12px;color:#888;font-size:14px;line-height:1.7">P2, P3 y P4 tienen garantía de 30 días. Si no ves mejoras en tu score después de implementar, te devolvemos el dinero sin preguntas.</p>
+    </details>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section style="background:#111;border-top:1px solid #1e1e1e;padding:80px 40px;text-align:center">
+  <div style="max-width:600px;margin:0 auto">
+    <div style="font-size:48px;margin-bottom:16px">🚀</div>
+    <h2 style="font-size:36px;font-weight:800;margin-bottom:16px">¿Listo para aparecer en las IAs?</h2>
+    <p style="color:#888;font-size:16px;margin-bottom:32px;line-height:1.7">Cada día que pasa sin optimizar tu sitio es dinero que se va a tu competencia. Audita gratis ahora.</p>
+    <button onclick="document.getElementById('audit-section').scrollIntoView({behavior:'smooth'})" style="background:#6c47ff;color:#fff;border:none;padding:16px 40px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer">⚡ Auditar mi sitio gratis</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:#0a0a0a;border-top:1px solid #1e1e1e;padding:24px 40px;text-align:center">
+  <p style="font-size:13px;color:#555">© 2026 Webpulse · Todos los derechos reservados · <a href="/panel" style="color:#6c47ff">Panel</a></p>
+</footer><script>
+  const API = 'https://webpulse-production-7f4c.up.railway.app'
+  const RAR_BY_SECTOR = { real_estate:7350, health:3200, restaurant:840, hotel:2450, general:1575 }
+  let currentProduct = null
+  let auditedUrl = ''
+
+  function rarEstimate(sector, score) {
+    return Math.round((RAR_BY_SECTOR[sector]||1575) * (score/10))
+  }
+
+  async function runHeroAudit() {
+    const url    = document.getElementById('hero-url').value.trim()
+    const sector = document.getElementById('hero-sector').value
+    const btn    = document.getElementById('hero-btn')
+    const result = document.getElementById('hero-result')
+
+    if(!url){ alert('Ingresa la URL de tu sitio web'); return }
+
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Analizando...'
+    result.className = 'audit-result-box'
+
+    try {
+      const res  = await fetch(API+'/api/audit', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({url, sector})
+      })
+      const data = await res.json()
+      if(data.error) throw new Error(data.error)
+
+      auditedUrl = url
+      const rar      = rarEstimate(sector, data.score)
+      const scoreColor = data.score>=7?'#ff6b6b':data.score>=4?'#ffa94d':'#69db7c'
+      const verdict    = data.score>=7?'CRÍTICO — Invisible para las IAs':data.score>=4?'MEJORABLE — Visibilidad parcial':'ACEPTABLE — Buena visibilidad'
+
+      result.innerHTML = `
+        <div class="result-score" style="color:${scoreColor}">${data.score}<span style="font-size:24px;color:#555">/10</span></div>
+        <div class="result-label">${verdict}</div>
+        <div class="result-grid">
+          <div class="result-card">
+            <div class="rc-label">Revenue en riesgo</div>
+            <div class="rc-value" style="color:#69db7c">$${rar.toLocaleString()}/mes</div>
+          </div>
+          <div class="result-card">
+            <div class="rc-label">Problemas críticos</div>
+            <div class="rc-value" style="color:#ff6b6b">${data.critical_count}</div>
+          </div>
+          <div class="result-card">
+            <div class="rc-label">Producto sugerido</div>
+            <div class="rc-value" style="color:#b197fc">${data.product_assigned}</div>
+          </div>
+          <div class="result-card">
+            <div class="rc-label">Sector</div>
+            <div class="rc-value" style="font-size:14px">${sector}</div>
+          </div>
+        </div>
+        <button class="result-cta" onclick="openPayment('${data.product_assigned}')">
+          🚀 Solucionar ahora — ${data.product_assigned} desde $${data.product_assigned==='P1'?49:data.product_assigned==='P2'?99:data.product_assigned==='P3'?499:2000} USD
+        </button>`
+
+      result.classList.add('show')
+
+      result.scrollIntoView({behavior:'smooth', block:'center'})
+
+    } catch(err) {
+      result.innerHTML = `<div style="color:#ff6b6b;text-align:center;padding:20px">❌ ${err.message}</div>`
+      result.classList.add('show')
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = '⚡ Auditar gratis'
+    }
+  }
+
+  function openPayment(product) {
+    currentProduct = product
+    const prices = {P1:'$49 USD', P2:'$99 USD', P3:'$499 USD', P4:'$2,000 USD'}
+    const names  = {P1:'Reporte IA', P2:'JSON-LD Pro', P3:'Web AI-Ready', P4:'Web + Jelou'}
+    document.getElementById('modal-title').textContent = `${product} — ${names[product]}`
+    document.getElementById('modal-desc').textContent  = `${prices[product]} · Pago seguro con MercadoPago`
+    if(auditedUrl) document.getElementById('modal-url').value = auditedUrl
+    const modal = document.getElementById('payment-modal')
+    modal.style.display = 'flex'
+  }
+
+  function closePayment() {
+    document.getElementById('payment-modal').style.display = 'none'
+  }
+
+  async function processPayment() {
+    const email = document.getElementById('modal-email').value.trim()
+    const url   = document.getElementById('modal-url').value.trim()
+    const btn   = document.getElementById('modal-pay-btn')
+
+    if(!email){ alert('Ingresa tu email'); return }
+    if(!url)  { alert('Ingresa la URL de tu sitio'); return }
+
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Procesando...'
+
+    try {
+      const res  = await fetch(API+'/api/payment/create', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ product: currentProduct, email, url })
+      })
+      const data = await res.json()
+      if(data.error) throw new Error(data.error)
+      window.location.href = data.checkout_url
+    } catch(err) {
+      alert('Error: ' + err.message)
+      btn.disabled = false
+      btn.innerHTML = '💳 Pagar con MercadoPago'
+    }
+  }
+
+  document.getElementById('payment-modal').addEventListener('click', function(e) {
+    if(e.target === this) closePayment()
+  })
+
+  document.addEventListener('keydown', function(e) {
+    if(e.key === 'Escape') closePayment()
+  })
+</script>
+</body>
+</html>
