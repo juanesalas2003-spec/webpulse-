@@ -232,7 +232,49 @@ app.patch('/api/prospects/:id/status', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
 })
+// ─── Prospección automática por sector ───────────────────
+app.post('/api/prospect/search', async (req, res) => {
+  const { sector = 'general', city = 'Colombia', limit = 10 } = req.body
 
+  const queries = {
+    real_estate: `agencias inmobiliarias ${city} sitio web`,
+    health:      `clinicas medicas ${city} sitio web`,
+    restaurant:  `restaurantes ${city} sitio web`,
+    hotel:       `hoteles ${city} sitio web`,
+    general:     `empresas ${city} sitio web`
+  }
+
+  const query = queries[sector] || queries.general
+
+  try {
+    const response = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.FIRECRAWL_API_KEY}`
+      },
+      body: JSON.stringify({ query, limit })
+    })
+
+    const data = await response.json()
+
+    if (!data.success) {
+      return res.status(402).json({
+        error: 'Sin créditos Firecrawl',
+        message: 'Recarga créditos en firecrawl.dev para activar esta función'
+      })
+    }
+
+    const urls = (data.data || [])
+      .map(r => r.url)
+      .filter(u => u && u.startsWith('http'))
+
+    res.json({ urls, query, total: urls.length })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 // ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
