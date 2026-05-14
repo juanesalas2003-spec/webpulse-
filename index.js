@@ -159,25 +159,12 @@ app.post('/api/audit/batch', async (req, res) => {
           .eq('id', existing.id)
         prospect = existing
       } else {
-       const { data: existing2 } = await supabase
-  .from('prospects')
-  .select('id')
-  .eq('domain', domain)
-  .maybeSingle()
-
-let prospect
-if (existing2) {
-  await supabase.from('prospects')
-    .update({ url, sector, score: combinedScore, status: 'audited', product_assigned: product })
-    .eq('id', existing2.id)
-  prospect = existing2
-} else {
-  const { data } = await supabase
-    .from('prospects')
-    .insert({ url, domain, sector, score: combinedScore, status: 'audited', product_assigned: product })
-    .select().single()
-  prospect = data
-}
+        const { data } = await supabase
+          .from('prospects')
+          .insert({ url, domain, sector, score: combinedScore, status: 'audited', product_assigned: product })
+          .select().single()
+        prospect = data
+      }
 
       await supabase.from('audits').insert({
         prospect_id: prospect.id,
