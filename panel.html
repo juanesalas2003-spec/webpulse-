@@ -394,7 +394,7 @@ ${r.solution?.next_step||''}`
       ?flags.sort((a,b)=>{const o={critical:0,warning:1,info:2};return(o[a.severity]||3)-(o[b.severity]||3)})
         .map(f=>`<div class="flag-item">
           <div class="flag-dot ${f.severity||'info'}"></div>
-          <div><div class="flag-text">${f.message||f.flag||JSON.stringify(f)}</div>
+          <div class="flag-text">${f.label||f.message||f.flag||'Sin descripción'}</div>
           <div class="flag-severity ${f.severity||'info'}">${f.severity||'info'}</div></div>
         </div>`).join('')
       :'<div class="no-flags">Sin flags registrados</div>'
