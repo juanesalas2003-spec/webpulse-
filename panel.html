@@ -46,6 +46,15 @@
     .batch-log .log-ok { color: #69db7c; }
     .batch-log .log-err { color: #ff6b6b; }
     .batch-log .log-info { color: #888; }
+    .prospect-form { display: flex; flex-direction: column; gap: 12px; }
+    .prospect-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .prospect-row select { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+    .prospect-row input { flex: 1; min-width: 200px; background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+    .prospect-row input:focus { outline: none; border-color: #6c47ff; }
+    .prospect-row button { background: #6c47ff; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+    .prospect-row button:hover { background: #5a38e0; }
+    .prospect-row button:disabled { background: #333; color: #666; cursor: default; }
+    .prospect-credits-warning { background: #1a1a0f; border: 1px solid #3d3d1a; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #ffd43b; margin-bottom: 12px; }
     .filters { padding: 16px 40px 0; display: flex; gap: 12px; align-items: center; }
     .filters select { background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
     .filters button { background: #6c47ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; }
@@ -140,8 +149,10 @@
   <h2>🔍 Auditar sitios</h2>
   <div class="audit-tabs">
     <button class="audit-tab active" onclick="switchTab('single',event)">Individual</button>
-    <button class="audit-tab" onclick="switchTab('batch',event)">Batch (múltiples URLs)</button>
+    <button class="audit-tab" onclick="switchTab('batch',event)">Batch</button>
+    <button class="audit-tab" onclick="switchTab('prospect',event)">🤖 Prospección automática</button>
   </div>
+
   <div class="tab-content active" id="tab-single">
     <div class="audit-form">
       <input type="url" id="audit-url" placeholder="https://ejemplo.com" />
@@ -156,6 +167,7 @@
     </div>
     <div class="audit-result" id="audit-result"></div>
   </div>
+
   <div class="tab-content" id="tab-batch">
     <div class="batch-form">
       <textarea id="batch-urls" placeholder="Pega una URL por línea:&#10;https://ejemplo1.com&#10;https://ejemplo2.com"></textarea>
@@ -176,6 +188,38 @@
         </div>
         <div class="batch-progress-bar-wrap"><div class="batch-progress-bar" id="batch-bar"></div></div>
         <div class="batch-log" id="batch-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-prospect">
+    <div class="prospect-form">
+      <div class="prospect-credits-warning">
+        ⚠️ Esta función requiere créditos de Firecrawl. Recarga en <a href="https://firecrawl.dev" target="_blank" style="color:#ffd43b">firecrawl.dev</a> para activarla.
+      </div>
+      <div class="prospect-row">
+        <select id="prospect-sector">
+          <option value="general">General</option>
+          <option value="real_estate">Inmobiliaria</option>
+          <option value="health">Salud / Clínica</option>
+          <option value="restaurant">Restaurante</option>
+          <option value="hotel">Hotel</option>
+        </select>
+        <input type="text" id="prospect-city" placeholder="Ciudad (ej: Bogotá, Medellín)" value="Colombia" />
+        <select id="prospect-limit">
+          <option value="5">5 sitios</option>
+          <option value="10" selected>10 sitios</option>
+          <option value="20">20 sitios</option>
+        </select>
+        <button id="prospect-btn" onclick="runProspection()">🤖 Buscar y auditar</button>
+      </div>
+      <div class="batch-progress" id="prospect-progress">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:6px">
+          <span id="prospect-status">Buscando sitios...</span>
+          <span id="prospect-counter">0/0</span>
+        </div>
+        <div class="batch-progress-bar-wrap"><div class="batch-progress-bar" id="prospect-bar"></div></div>
+        <div class="batch-log" id="prospect-log"></div>
       </div>
     </div>
   </div>
@@ -249,6 +293,104 @@
     a.download=`webpulse_prospects_${new Date().toISOString().slice(0,10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function runProspection() {
+    const sector = document.getElementById('prospect-sector').value
+    const city   = document.getElementById('prospect-city').value.trim() || 'Colombia'
+    const limit  = parseInt(document.getElementById('prospect-limit').value)
+    const btn    = document.getElementById('prospect-btn')
+    const progress = document.getElementById('prospect-progress')
+    const log    = document.getElementById('prospect-log')
+    const bar    = document.getElementById('prospect-bar')
+    const counter = document.getElementById('prospect-counter')
+    const status = document.getElementById('prospect-status')
+
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Buscando...'
+    progress.style.display = 'block'
+    log.innerHTML = ''
+    bar.style.width = '0%'
+
+    try {
+      status.textContent = `Buscando sitios de ${sector} en ${city}...`
+      const searchRes = await fetch(API+'/api/prospect/search', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({sector, city, limit})
+      })
+      const searchData = await searchRes.json()
+
+      if(searchData.error) {
+        const errLine = document.createElement('div')
+        errLine.className = 'log-err'
+        errLine.textContent = '❌ ' + searchData.message || searchData.error
+        log.appendChild(errLine)
+        return
+      }
+
+      const urls = searchData.urls || []
+      if(!urls.length) {
+        const errLine = document.createElement('div')
+        errLine.className = 'log-err'
+        errLine.textContent = '❌ No se encontraron sitios. Intenta con otra ciudad o sector.'
+        log.appendChild(errLine)
+        return
+      }
+
+      const infoLine = document.createElement('div')
+      infoLine.className = 'log-info'
+      infoLine.textContent = `✓ Encontrados ${urls.length} sitios para "${searchData.query}". Auditando...`
+      log.appendChild(infoLine)
+
+      let done = 0
+      for(const url of urls) {
+        counter.textContent = `${done}/${urls.length}`
+        status.textContent = `Auditando ${new URL(url).hostname}...`
+        bar.style.width = `${Math.round((done/urls.length)*100)}%`
+
+        const logLine = document.createElement('div')
+        logLine.className = 'log-info'
+        logLine.textContent = `⏳ ${url}`
+        log.appendChild(logLine)
+        log.scrollTop = log.scrollHeight
+
+        try {
+          const res = await fetch(API+'/api/audit',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({url, sector})
+          })
+          const data = await res.json()
+          if(data.error) throw new Error(data.error)
+          const s = data.score??'?'
+          const p = data.product_assigned??'?'
+          const r = data.score ? rarEstimate(sector,data.score) : 0
+          logLine.className = 'log-ok'
+          logLine.textContent = `✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes`
+        } catch(err) {
+          logLine.className = 'log-err'
+          logLine.textContent = `❌ ${url} — ${err.message}`
+        }
+        done++
+        log.scrollTop = log.scrollHeight
+        if(done < urls.length) await new Promise(r=>setTimeout(r,1500))
+      }
+
+      bar.style.width = '100%'
+      counter.textContent = `${done}/${urls.length}`
+      status.textContent = `Completado — ${done} sitios procesados`
+      loadProspects()
+
+    } catch(err) {
+      const errLine = document.createElement('div')
+      errLine.className = 'log-err'
+      errLine.textContent = '❌ Error: ' + err.message
+      log.appendChild(errLine)
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = '🤖 Buscar y auditar'
+    }
   }
 
   async function viewReport(id) {
@@ -394,7 +536,7 @@ ${r.solution?.next_step||''}`
       ?flags.sort((a,b)=>{const o={critical:0,warning:1,info:2};return(o[a.severity]||3)-(o[b.severity]||3)})
         .map(f=>`<div class="flag-item">
           <div class="flag-dot ${f.severity||'info'}"></div>
-          <div class="flag-text">${f.label||f.message||f.flag||'Sin descripción'}</div>
+          <div><div class="flag-text">${f.label||f.message||f.flag||'Sin descripción'}</div>
           <div class="flag-severity ${f.severity||'info'}">${f.severity||'info'}</div></div>
         </div>`).join('')
       :'<div class="no-flags">Sin flags registrados</div>'
@@ -440,7 +582,7 @@ ${r.solution?.next_step||''}`
         <button class="copy-btn" onclick="viewReport('${p.id}')">📄 Ver reporte completo</button>
         <button class="copy-btn" onclick="window.open('${p.url}','_blank')">🌐 Abrir sitio web</button>
       </div>
-      <div id="report-box-${p.id}"></div>`
+      <div id="report-box-${p.id}" style="display:none"></div>`
     document.getElementById('detail-panel').classList.add('open')
     document.getElementById('table-wrap').classList.add('with-detail')
     document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'))
