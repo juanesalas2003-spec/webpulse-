@@ -14,7 +14,6 @@
     .stat .label { font-size: 12px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
     .stat .value { font-size: 28px; font-weight: 700; color: #fff; }
     .stat .sub { font-size: 12px; color: #555; margin-top: 4px; }
-
     .audit-box { margin: 24px 40px 0; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; }
     .audit-box h2 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #ccc; }
     .audit-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -27,15 +26,50 @@
     .audit-result { margin-top: 16px; padding: 14px; background: #0f0f0f; border-radius: 8px; font-size: 13px; display: none; }
     .audit-result.success { border: 1px solid #1a3d2e; color: #69db7c; }
     .audit-result.error { border: 1px solid #3d1a1a; color: #ff6b6b; }
-
     .filters { padding: 16px 40px 0; display: flex; gap: 12px; align-items: center; }
     .filters select { background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
     .filters button { background: #6c47ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-    .table-wrap { padding: 16px 40px 40px; overflow-x: auto; }
+    .main-layout { display: flex; gap: 0; }
+    .table-wrap { flex: 1; padding: 16px 40px 40px; overflow-x: auto; transition: all 0.3s; }
+    .table-wrap.with-detail { padding-right: 20px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { text-align: left; padding: 10px 14px; color: #888; font-weight: 500; border-bottom: 1px solid #2a2a2a; font-size: 11px; text-transform: uppercase; }
     td { padding: 14px; border-bottom: 1px solid #1e1e1e; vertical-align: middle; }
-    tr:hover td { background: #1a1a1a; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td { background: #1a1a1a; }
+    tr.selected td { background: #1a1a2e !important; border-left: 3px solid #6c47ff; }
+    .detail-panel { width: 0; overflow: hidden; transition: width 0.3s ease; background: #1a1a1a; border-left: 1px solid #2a2a2a; flex-shrink: 0; }
+    .detail-panel.open { width: 380px; }
+    .detail-inner { width: 380px; padding: 24px; height: 100vh; overflow-y: auto; position: sticky; top: 0; }
+    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .detail-domain { font-size: 16px; font-weight: 700; color: #fff; word-break: break-all; }
+    .detail-url { font-size: 11px; color: #555; margin-top: 4px; }
+    .close-btn { background: none; border: none; color: #555; font-size: 20px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+    .close-btn:hover { color: #f0f0f0; }
+    .detail-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .detail-score-card { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; text-align: center; }
+    .detail-score-card .ds-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 6px; }
+    .detail-score-card .ds-value { font-size: 22px; font-weight: 700; }
+    .detail-section { margin-bottom: 20px; }
+    .detail-section h3 { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1px solid #2a2a2a; padding-bottom: 6px; }
+    .flag-item { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #1e1e1e; }
+    .flag-item:last-child { border-bottom: none; }
+    .flag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .flag-dot.critical { background: #ff6b6b; }
+    .flag-dot.warning { background: #ffa94d; }
+    .flag-dot.info { background: #74c0fc; }
+    .flag-text { font-size: 12px; color: #ccc; line-height: 1.4; }
+    .flag-severity { font-size: 10px; margin-top: 2px; }
+    .flag-severity.critical { color: #ff6b6b; }
+    .flag-severity.warning { color: #ffa94d; }
+    .flag-severity.info { color: #74c0fc; }
+    .detail-meta { display: flex; flex-direction: column; gap: 8px; }
+    .meta-row { display: flex; justify-content: space-between; font-size: 13px; }
+    .meta-row .meta-label { color: #888; }
+    .meta-row .meta-value { color: #f0f0f0; font-weight: 500; }
+    .copy-btn { width: 100%; background: #0f0f0f; border: 1px solid #2a2a2a; color: #ccc; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-top: 8px; }
+    .copy-btn:hover { border-color: #6c47ff; color: #fff; }
+    .copy-btn.copied { border-color: #69db7c; color: #69db7c; }
     .score-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .score-critical { background: #3d1a1a; color: #ff6b6b; }
     .score-medium { background: #3d2e1a; color: #ffa94d; }
@@ -58,11 +92,10 @@
     .export-btn:hover { border-color: #69db7c; background: #1a3d2e22; }
     .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #555; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .no-flags { color: #555; font-size: 13px; padding: 10px 0; }
   </style>
 </head>
-<body>
-
-<header>
+<body><header>
   <h1>⚡ Webpulse</h1>
   <div style="display:flex;gap:10px;align-items:center">
     <span id="last-update" style="font-size:13px;color:#888">Cargando...</span>
@@ -72,29 +105,12 @@
 </header>
 
 <div class="stats">
-  <div class="stat">
-    <div class="label">Total auditados</div>
-    <div class="value" id="stat-total">—</div>
-    <div class="sub">prospectos en pipeline</div>
-  </div>
-  <div class="stat">
-    <div class="label">Score promedio</div>
-    <div class="value" id="stat-score">—</div>
-    <div class="sub">urgencia de intervención</div>
-  </div>
-  <div class="stat">
-    <div class="label">RAR-IA total</div>
-    <div class="value" id="stat-rar">—</div>
-    <div class="sub">USD/mes en riesgo</div>
-  </div>
-  <div class="stat">
-    <div class="label">Críticos (P2+)</div>
-    <div class="value" id="stat-critical">—</div>
-    <div class="sub">score ≥ 7</div>
-  </div>
+  <div class="stat"><div class="label">Total auditados</div><div class="value" id="stat-total">—</div><div class="sub">prospectos en pipeline</div></div>
+  <div class="stat"><div class="label">Score promedio</div><div class="value" id="stat-score">—</div><div class="sub">urgencia de intervención</div></div>
+  <div class="stat"><div class="label">RAR-IA total</div><div class="value" id="stat-rar">—</div><div class="sub">USD/mes en riesgo</div></div>
+  <div class="stat"><div class="label">Críticos (P2+)</div><div class="value" id="stat-critical">—</div><div class="sub">score ≥ 7</div></div>
 </div>
 
-<!-- AUDIT FORM -->
 <div class="audit-box">
   <h2>🔍 Auditar nuevo sitio</h2>
   <div class="audit-form">
@@ -127,175 +143,196 @@
   <button onclick="loadProspects()">Buscar</button>
 </div>
 
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th>Sitio</th>
-        <th>Sector</th>
-        <th>Score</th>
-        <th>RAR mensual</th>
-        <th>Producto</th>
-        <th>Estado</th>
-        <th>Fecha</th>
-      </tr>
-    </thead>
-    <tbody id="prospects-table">
-      <tr><td colspan="7" class="empty">Cargando prospectos...</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<script>
+<div class="main-layout">
+  <div class="table-wrap" id="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Sitio</th><th>Sector</th><th>Score</th><th>RAR mensual</th><th>Producto</th><th>Estado</th><th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody id="prospects-table">
+        <tr><td colspan="7" class="empty">Cargando prospectos...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-inner" id="detail-inner"></div>
+  </div>
+</div><script>
   const API = 'https://webpulse-production-7f4c.up.railway.app'
-
-  const RAR_BY_SECTOR = {
-    real_estate: 7350,
-    health:      3200,
-    restaurant:  840,
-    hotel:       2450,
-    general:     1575
-  }
-
+  const RAR_BY_SECTOR = { real_estate:7350, health:3200, restaurant:840, hotel:2450, general:1575 }
   let currentData = []
+  let selectedId  = null
 
-  function scoreClass(s) {
-    return s >= 7 ? 'score-critical' : s >= 4 ? 'score-medium' : 'score-ok'
-  }
-
-  function rarEstimate(sector, score) {
-    return Math.round((RAR_BY_SECTOR[sector] || 1575) * (score / 10))
-  }
-
+  function scoreClass(s) { return s>=7?'score-critical':s>=4?'score-medium':'score-ok' }
+  function scoreColor(s)  { return s>=7?'#ff6b6b':s>=4?'#ffa94d':'#69db7c' }
+  function rarEstimate(sector,score) { return Math.round((RAR_BY_SECTOR[sector]||1575)*(score/10)) }
   function formatDate(iso) {
-    if (!iso) return '—'
-    return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+    if(!iso) return '—'
+    return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})
   }
 
   function exportCSV() {
-    if (!currentData.length) { alert('No hay datos para exportar'); return }
-
-    const headers = ['Dominio', 'URL', 'Sector', 'Score', 'RAR_mensual_USD', 'Producto', 'Estado', 'Fecha']
-    const rows = currentData.map(p => {
-      const rar = rarEstimate(p.sector, p.score || 0)
-      return [
-        p.domain || p.url,
-        p.url,
-        p.sector || 'general',
-        p.score || 0,
-        rar,
-        p.product_assigned || '—',
-        p.status || 'pending',
-        formatDate(p.created_at)
-      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+    if(!currentData.length){alert('No hay datos para exportar');return}
+    const headers=['Dominio','URL','Sector','Score','RAR_mensual_USD','Producto','Estado','Fecha']
+    const rows=currentData.map(p=>{
+      const rar=rarEstimate(p.sector,p.score||0)
+      return [p.domain||p.url,p.url,p.sector||'general',p.score||0,rar,
+              p.product_assigned||'—',p.status||'pending',formatDate(p.created_at)]
+        .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')
     })
-
-    const csv = [headers.join(','), ...rows].join('\n')
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = `webpulse_prospects_${new Date().toISOString().slice(0,10)}.csv`
+    const csv=[headers.join(','),...rows].join('\n')
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})
+    const url=URL.createObjectURL(blob)
+    const a=document.createElement('a')
+    a.href=url
+    a.download=`webpulse_prospects_${new Date().toISOString().slice(0,10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
 
+  function openDetail(p) {
+    if(!p) return
+    selectedId=p.id
+    const rar=rarEstimate(p.sector,p.score||0)
+    const flags=Array.isArray(p.latest_flags)?p.latest_flags:[]
+    const flagsHtml=flags.length
+      ?flags.sort((a,b)=>{const o={critical:0,warning:1,info:2};return(o[a.severity]||3)-(o[b.severity]||3)})
+        .map(f=>`<div class="flag-item">
+          <div class="flag-dot ${f.severity||'info'}"></div>
+          <div><div class="flag-text">${f.message||f.flag||JSON.stringify(f)}</div>
+          <div class="flag-severity ${f.severity||'info'}">${f.severity||'info'}</div></div>
+        </div>`).join('')
+      :'<div class="no-flags">Sin flags registrados</div>'
+    const pc=`product-${(p.product_assigned||'p1').toLowerCase()}`
+    document.getElementById('detail-inner').innerHTML=`
+      <div class="detail-header">
+        <div>
+          <div class="detail-domain">${p.domain||p.url}</div>
+          <div class="detail-url"><a href="${p.url}" target="_blank" style="color:#555;text-decoration:none">${p.url}</a></div>
+        </div>
+        <button class="close-btn" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="detail-scores">
+        <div class="detail-score-card"><div class="ds-label">Score total</div><div class="ds-value" style="color:${scoreColor(p.score||0)}">${p.score||'—'}</div></div>
+        <div class="detail-score-card"><div class="ds-label">RAR mensual</div><div class="ds-value" style="color:#69db7c;font-size:16px">$${rar.toLocaleString()}</div></div>
+        <div class="detail-score-card"><div class="ds-label">Producto</div><div class="ds-value ${pc}" style="font-size:18px">${p.product_assigned||'—'}</div></div>
+        <div class="detail-score-card"><div class="ds-label">Auditorías</div><div class="ds-value" style="font-size:18px">${p.audit_count||1}</div></div>
+      </div>
+      <div class="detail-section">
+        <h3>Información</h3>
+        <div class="detail-meta">
+          <div class="meta-row"><span class="meta-label">Sector</span><span class="meta-value">${p.sector||'general'}</span></div>
+          <div class="meta-row"><span class="meta-label">Estado</span><span class="meta-value"><span class="status-badge status-${p.status||'pending'}">${p.status||'pending'}</span></span></div>
+          <div class="meta-row"><span class="meta-label">Fecha</span><span class="meta-value">${formatDate(p.created_at)}</span></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h3>Problemas detectados (${flags.length})</h3>
+        ${flagsHtml}
+      </div>
+      <div class="detail-section">
+        <h3>Acciones</h3>
+        <button class="copy-btn" id="copy-btn-${p.id}" onclick="copyProspectInfo('${p.id}')">📋 Copiar resumen para contacto</button>
+        <button class="copy-btn" onclick="window.open('${p.url}','_blank')">🌐 Abrir sitio web</button>
+      </div>`
+    document.getElementById('detail-panel').classList.add('open')
+    document.getElementById('table-wrap').classList.add('with-detail')
+    document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'))
+    document.querySelectorAll('tr.clickable').forEach(r=>{ if(r.dataset.id===p.id) r.classList.add('selected') })
+  }
+
+  function closeDetail() {
+    document.getElementById('detail-panel').classList.remove('open')
+    document.getElementById('table-wrap').classList.remove('with-detail')
+    document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'))
+    selectedId=null
+  }
+
+  function copyProspectInfo(id) {
+    const p=currentData.find(x=>x.id===id)
+    if(!p) return
+    const rar=rarEstimate(p.sector,p.score||0)
+    const flags=Array.isArray(p.latest_flags)?p.latest_flags:[]
+    const critical=flags.filter(f=>f.severity==='critical').length
+    const text=`🔍 Análisis Webpulse — ${p.domain}\nURL: ${p.url}\nSector: ${p.sector}\nScore IA: ${p.score}/10\nProducto recomendado: ${p.product_assigned}\nRevenue en riesgo: $${rar.toLocaleString()}/mes\nProblemas críticos: ${critical}\nFecha: ${formatDate(p.created_at)}`
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=document.getElementById('copy-btn-'+id)
+      if(btn){btn.textContent='✅ Copiado!';btn.classList.add('copied');
+        setTimeout(()=>{btn.textContent='📋 Copiar resumen para contacto';btn.classList.remove('copied')},2000)}
+    })
+  }
+
   async function runAudit() {
-    const url    = document.getElementById('audit-url').value.trim()
-    const sector = document.getElementById('audit-sector').value
-    const btn    = document.getElementById('audit-btn')
-    const result = document.getElementById('audit-result')
-
-    if (!url) { alert('Ingresa una URL'); return }
-
-    btn.disabled = true
-    btn.innerHTML = '<span class="spinner"></span> Auditando...'
-    result.style.display = 'none'
-
+    const url=document.getElementById('audit-url').value.trim()
+    const sector=document.getElementById('audit-sector').value
+    const btn=document.getElementById('audit-btn')
+    const result=document.getElementById('audit-result')
+    if(!url){alert('Ingresa una URL');return}
+    btn.disabled=true
+    btn.innerHTML='<span class="spinner"></span> Auditando...'
+    result.style.display='none'
     try {
-      const res  = await fetch(API + '/api/audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, sector })
-      })
-      const data = await res.json()
-
-      if (data.error) throw new Error(data.error)
-
-      const rar = rarEstimate(sector, data.score)
-      result.className = 'audit-result success'
-      result.style.display = 'block'
-      result.innerHTML = `
-        ✅ <strong>${new URL(url).hostname}</strong> auditado —
-        Score: <strong>${data.score}</strong> |
-        Producto: <strong>${data.product_assigned}</strong> |
-        RAR estimado: <strong>$${rar.toLocaleString()}/mes</strong> |
-        Problemas críticos: <strong>${data.critical_count}</strong>
-      `
+      const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})})
+      const data=await res.json()
+      if(data.error) throw new Error(data.error)
+      const rar=rarEstimate(sector,data.score)
+      result.className='audit-result success'
+      result.style.display='block'
+      result.innerHTML=`✅ <strong>${new URL(url).hostname}</strong> auditado — Score: <strong>${data.score}</strong> | Producto: <strong>${data.product_assigned}</strong> | RAR estimado: <strong>$${rar.toLocaleString()}/mes</strong> | Problemas críticos: <strong>${data.critical_count}</strong>`
       loadProspects()
-    } catch (err) {
-      result.className = 'audit-result error'
-      result.style.display = 'block'
-      result.innerHTML = '❌ Error: ' + err.message
+    } catch(err) {
+      result.className='audit-result error'
+      result.style.display='block'
+      result.innerHTML='❌ Error: '+err.message
     } finally {
-      btn.disabled = false
-      btn.innerHTML = '⚡ Auditar ahora'
+      btn.disabled=false
+      btn.innerHTML='⚡ Auditar ahora'
     }
   }
 
   async function loadProspects() {
-    const status   = document.getElementById('filter-status').value
-    const minScore = document.getElementById('filter-score').value
-    let url = API + '/api/prospects?'
-    if (status)   url += 'status=' + status + '&'
-    if (minScore) url += 'min_score=' + minScore
-
-    const tbody = document.getElementById('prospects-table')
-
+    const status=document.getElementById('filter-status').value
+    const minScore=document.getElementById('filter-score').value
+    let url=API+'/api/prospects?'
+    if(status) url+='status='+status+'&'
+    if(minScore) url+='min_score='+minScore
+    const tbody=document.getElementById('prospects-table')
     try {
-      const res  = await fetch(url)
-      const data = await res.json()
-
-      currentData = data || []
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay prospectos aún.</td></tr>'
-        return
-      }
-
-      const total    = data.length
-      const avgScore = (data.reduce((a, b) => a + (b.score || 0), 0) / total).toFixed(1)
-      const totalRAR = data.reduce((a, b) => a + rarEstimate(b.sector, b.score || 0), 0)
-      const critical = data.filter(p => (p.score || 0) >= 7).length
-
-      document.getElementById('stat-total').textContent    = total
-      document.getElementById('stat-score').textContent    = avgScore
-      document.getElementById('stat-rar').textContent      = '$' + totalRAR.toLocaleString()
-      document.getElementById('stat-critical').textContent = critical
-
-      tbody.innerHTML = data.map(p => {
-        const rar = rarEstimate(p.sector, p.score || 0)
-        return `<tr>
-          <td><div class="domain">${p.domain || p.url}<small>${p.url}</small></div></td>
-          <td>${p.sector || 'general'}</td>
-          <td><span class="score-badge ${scoreClass(p.score || 0)}">${p.score || '—'}</span></td>
+      const res=await fetch(url)
+      const data=await res.json()
+      currentData=data||[]
+      if(!data||data.length===0){tbody.innerHTML='<tr><td colspan="7" class="empty">No hay prospectos aún.</td></tr>';return}
+      const total=data.length
+      const avgScore=(data.reduce((a,b)=>a+(b.score||0),0)/total).toFixed(1)
+      const totalRAR=data.reduce((a,b)=>a+rarEstimate(b.sector,b.score||0),0)
+      const critical=data.filter(p=>(p.score||0)>=7).length
+      document.getElementById('stat-total').textContent=total
+      document.getElementById('stat-score').textContent=avgScore
+      document.getElementById('stat-rar').textContent='$'+totalRAR.toLocaleString()
+      document.getElementById('stat-critical').textContent=critical
+      tbody.innerHTML=data.map(p=>{
+        const rar=rarEstimate(p.sector,p.score||0)
+        const sel=p.id===selectedId?'selected':''
+        return `<tr class="clickable ${sel}" data-id="${p.id}" onclick="openDetail(currentData.find(x=>x.id==='${p.id}'))">
+          <td><div class="domain">${p.domain||p.url}<small>${p.url}</small></div></td>
+          <td>${p.sector||'general'}</td>
+          <td><span class="score-badge ${scoreClass(p.score||0)}">${p.score||'—'}</span></td>
           <td class="rar">$${rar.toLocaleString()}/mes</td>
-          <td class="product-${(p.product_assigned||'p1').toLowerCase()}">${p.product_assigned || '—'}</td>
-          <td><span class="status-badge status-${p.status||'pending'}">${p.status || 'pending'}</span></td>
+          <td class="product-${(p.product_assigned||'p1').toLowerCase()}">${p.product_assigned||'—'}</td>
+          <td><span class="status-badge status-${p.status||'pending'}">${p.status||'pending'}</span></td>
           <td>${formatDate(p.created_at)}</td>
         </tr>`
       }).join('')
-
-      document.getElementById('last-update').textContent =
-        'Actualizado: ' + new Date().toLocaleTimeString('es-CO')
-
-    } catch (err) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">Error conectando con la API.</td></tr>'
+      document.getElementById('last-update').textContent='Actualizado: '+new Date().toLocaleTimeString('es-CO')
+    } catch(err) {
+      tbody.innerHTML='<tr><td colspan="7" class="empty">Error conectando con la API.</td></tr>'
     }
   }
 
   loadProspects()
-  setInterval(loadProspects, 30000)
+  setInterval(loadProspects,30000)
 </script>
 </body>
 </html>
