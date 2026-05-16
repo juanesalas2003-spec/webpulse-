@@ -408,10 +408,12 @@ app.get('/api/ai-scan/:domain', async (req, res) => {
       .order('month', { ascending: false })
       .limit(12)
 
-    res.json({ brand, snapshots: snapshots || [] })
+     res.json({ brand, snapshots: snapshots || [] })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
-}// ─── Servidor ─────────────────────────────────────────────
+})
+
+// ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
