@@ -69,7 +69,8 @@ export async function runScan({
   // 3. Ejecutar queries y parsear respuestas
   const queryResults = []
   let processed = 0
-
+console.log(`[scanner] Ejecutando con engines: ${engines.join(', ')}`)
+console.log(`[scanner] Primera query: ${queries[0]?.text}`)
   for (const query of queries) {
     try {
       // Ejecutar en los engines seleccionados
@@ -113,10 +114,9 @@ export async function runScan({
       // Rate limiting entre queries
       await new Promise(r => setTimeout(r, 800))
 
-    } catch (err) {
-      console.error(`[scanner] Error en query "${query.text}":`, err.message)
-    }
-  }
+    }} catch (err) {
+  console.error(`[scanner] Error en query "${query.text}":`, err.message, err.stack)
+}
 
   // 4. Calcular métricas finales
   const asaResult = calculateASA(queryResults)
