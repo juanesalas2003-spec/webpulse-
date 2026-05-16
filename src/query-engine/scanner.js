@@ -24,19 +24,18 @@ async function getOrCreateBrand(domain, sector, city) {
 }
 
 async function saveScanResults(brandId, queryResults, asaResult, month, year) {
-  // Guardar snapshot mensual
   const { data: snapshot } = await supabase
     .from('ai_snapshots')
     .insert({
-      brand_id:   brandId,
+      brand_id:      brandId,
       month,
       year,
-      asa:        asaResult.asa,
-      aar:        asaResult.aar,
-      level:      asaResult.level,
-      appearances: asaResult.appearances,
+      asa:           asaResult.asa,
+      aar:           asaResult.aar,
+      level:         asaResult.level,
+      appearances:   asaResult.appearances,
       total_queries: asaResult.total,
-      raw_results: queryResults
+      raw_results:   queryResults
     })
     .select().single()
 
@@ -58,37 +57,37 @@ export async function runScan({
   const month = now.getMonth() + 1
   const year  = now.getFullYear()
 
-  // 1. Obtener o crear marca en BD
   const brandRecord = await getOrCreateBrand(domain, sector, city)
   const brandName   = brand || brandRecord.name
 
-  // 2. Generar queries
   const queries = generateQueries({ brand: brandName, sector, city, limit: queryLimit })
   console.log(`[scanner] ${queries.length} queries generadas`)
+  console.log(`[scanner] Engines: ${engines.join(', ')}`)
+  console.log(`[scanner] Primera query: ${queries[0]?.text}`)
 
-  // 3. Ejecutar queries y parsear respuestas
   const queryResults = []
   let processed = 0
-console.log(`[scanner] Ejecutando con engines: ${engines.join(', ')}`)
-console.log(`[scanner] Primera query: ${queries[0]?.text}`)
-  for (const query of queries) {
-    try {
-      // Ejecutar en los engines seleccionados
-      const responses = await executeQuery(query.text, engines)
 
-      // Parsear cada respuesta
+  for (const query of queries) {
+    console.log(`[scanner] Ejecutando query ${processed+1}/${queries.length}: "${query.text}"`)
+    try {
+      const responses = await executeQuery(query.text, engines)
+      console.log(`[scanner] Respuestas recibidas: ${responses.length}`)
+
       for (const response of responses) {
+        console.log(`[scanner] Engine ${response.engine}: success=${response.success} error=${response.error||'ninguno'}`)
         if (!response.success || !response.response) continue
 
         const parsed = parseResponse(response.response, brandName, domain)
+        console.log(`[scanner] Parsed: appears=${parsed.appears} mentions=${parsed.total_mentions}`)
 
         queryResults.push({
-          query_text:   query.text,
-          intent:       query.intent,
-          weight:       query.weight,
-          engine:       response.engine,
-          appears:      parsed.appears,
-          token_share:  parsed.token_share,
+          query_text:        query.text,
+          intent:            query.intent,
+          weight:            query.weight,
+          engine:            response.engine,
+          appears:           parsed.appears,
+          token_share:       parsed.token_share,
           exact_mentions:    parsed.exact_mentions,
           semantic_mentions: parsed.semantic_mentions,
           is_first_mention:  parsed.is_first_mention,
@@ -100,7 +99,6 @@ console.log(`[scanner] Primera query: ${queries[0]?.text}`)
 
       processed++
 
-      // Callback de progreso para streaming al frontend
       if (onProgress) {
         onProgress({
           processed,
@@ -111,39 +109,33 @@ console.log(`[scanner] Primera query: ${queries[0]?.text}`)
         })
       }
 
-      // Rate limiting entre queries
       await new Promise(r => setTimeout(r, 800))
 
-    }} catch (err) {
-  console.error(`[scanner] Error en query "${query.text}":`, err.message, err.stack)
-}
+    } catch (err) {
+      console.error(`[scanner] Error en query "${query.text}":`, err.message)
+      console.error(err.stack)
+      processed++
+    }
+  }
 
-  // 4. Calcular métricas finales
+  console.log(`[scanner] Total queryResults: ${queryResults.length}`)
   const asaResult = calculateASA(queryResults)
-
   console.log(`[scanner] Completado — ASA: ${asaResult.asa}% | Nivel: ${asaResult.level}`)
 
-  // 5. Guardar en BD
-  const snapshot = await saveScanResults(
-    brandRecord.id,
-    queryResults,
-    asaResult,
-    month,
-    year
-  )
+  const snapshot = await saveScanResults(brandRecord.id, queryResults, asaResult, month, year)
 
   return {
-    brand_id:     brandRecord.id,
+    brand_id:      brandRecord.id,
     domain,
-    brand:        brandName,
+    brand:         brandName,
     sector,
     city,
-    asa:          asaResult.asa,
-    aar:          asaResult.aar,
-    level:        asaResult.level,
-    appearances:  asaResult.appearances,
+    asa:           asaResult.asa,
+    aar:           asaResult.aar,
+    level:         asaResult.level,
+    appearances:   asaResult.appearances,
     total_queries: queryResults.length,
-    snapshot_id:  snapshot?.id,
+    snapshot_id:   snapshot?.id,
     month,
     year,
     query_results: queryResults
