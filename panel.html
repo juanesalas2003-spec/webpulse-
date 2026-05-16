@@ -155,7 +155,13 @@
     .ai-metric .am-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
     .ai-metric .am-value { font-size: 22px; font-weight: 700; color: #1db97a; }
     .ai-metric .am-sub { font-size: 11px; color: #555; margin-top: 2px; }
-    .ai-queries-list { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; }
+    .list.innerHTML = queries.map(q => `
+  <div class="ai-query-item">
+    <span class="ai-query-text">${q.query_text || q.query}</span>
+    ${(q.appears || q.found)
+      ? `<span class="ai-query-found">✅ encontrado</span>`
+      : `<span class="ai-query-notfound">— no encontrado</span>`}
+  </div>`).join('')
     .ai-query-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e1e1e; font-size: 12px; }
     .ai-query-item:last-child { border-bottom: none; }
     .ai-query-text { color: #ccc; flex: 1; }
