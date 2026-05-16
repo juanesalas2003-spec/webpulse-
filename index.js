@@ -346,7 +346,72 @@ app.post('/api/prospect/search', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
+})// ─── AI Presence Scan ─────────────────────────────────────
+app.post('/api/ai-scan', async (req, res) => {
+  const { domain, brand, sector = 'general', city = 'Colombia', query_limit = 20 } = req.body
+  if (!domain) return res.status(400).json({ error: 'domain requerido' })
+
+  // Streaming de progreso via SSE
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.flushHeaders()
+
+  const send = (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`)
+  }
+
+  try {
+    const { runScan } = await import('./src/query-engine/scanner.js')
+
+    send({ type: 'start', message: `Iniciando scan de ${domain}...` })
+
+    const result = await runScan({
+      domain,
+      brand:      brand || domain.replace(/^www\./, '').split('.')[0],
+      sector,
+      city,
+      queryLimit: parseInt(query_limit),
+      engines:    ['gpt4o-mini', 'gemini'],
+      onProgress: (progress) => {
+        send({ type: 'progress', ...progress })
+      }
+    })
+
+    send({ type: 'complete', result })
+
+  } catch (err) {
+    console.error('[ai-scan] Error:', err.message)
+    send({ type: 'error', message: err.message })
+  } finally {
+    res.end()
+  }
 })
-// ─── Servidor ─────────────────────────────────────────────
+
+// ─── Obtener historial de scans de una marca ──────────────
+app.get('/api/ai-scan/:domain', async (req, res) => {
+  const domain = req.params.domain
+  try {
+    const { data: brand } = await supabase
+      .from('ai_brands')
+      .select('id, name, sector, city')
+      .eq('domain', domain)
+      .maybeSingle()
+
+    if (!brand) return res.status(404).json({ error: 'Marca no encontrada' })
+
+    const { data: snapshots } = await supabase
+      .from('ai_snapshots')
+      .select('id, month, year, asa, aar, level, appearances, total_queries, created_at')
+      .eq('brand_id', brand.id)
+      .order('year', { ascending: false })
+      .order('month', { ascending: false })
+      .limit(12)
+
+    res.json({ brand, snapshots: snapshots || [] })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}// ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
