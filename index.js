@@ -372,7 +372,7 @@ app.post('/api/ai-scan', async (req, res) => {
       sector,
       city,
       queryLimit: parseInt(query_limit),
-      engines:    ['gpt4o-mini', 'gemini'],
+      engines:    ['gemini'],
       onProgress: (progress) => {
         send({ type: 'progress', ...progress })
       }
