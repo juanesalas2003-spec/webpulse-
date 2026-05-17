@@ -1,7 +1,7 @@
 // src/query-engine/executor.js
 
 const OPENAI_API  = 'https://api.openai.com/v1/chat/completions'
-const GEMINI_API  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+const GEMINI_API  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 function buildPrompt(queryText) {
   return `${queryText}
