@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulsIA — Mide y mejora tu presencia en ChatGPT, Gemini y Perplexity</title>
+  <meta name="description" content="PulsIA mide cuánto aparece tu marca en las respuestas de IA y te da las herramientas para dominar el nuevo SEO. Audita gratis en 60 segundos.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #f0f0f0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav { background: #0d0d0d; border-bottom: 1px solid #1a1a1a; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+    .nav-logo span { color: #6c47ff; }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { font-size: 14px; color: #888; transition: color 0.2s; }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta { background: #6c47ff; color: #fff; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+    .nav-cta:hover { background: #5a38e0; }
+
+    /* HERO */
+    .hero { padding: 100px 40px 70px; text-align: center; max-width: 860px; margin: 0 auto; position: relative; }
+    .hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 600px; height: 400px; background: radial-gradient(ellipse, #6c47ff15 0%, transparent 70%); pointer-events: none; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: #1a1a2e; color: #b197fc; border: 1px solid #2a2a4e; padding: 6px 18px; border-radius: 20px; font-size: 13px; margin-bottom: 28px; }
+    .hero h1 { font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 24px; letter-spacing: -1px; }
+    .hero h1 .highlight { color: #6c47ff; }
+    .hero h1 .highlight2 { background: linear-gradient(135deg, #6c47ff, #1db97a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 18px; color: #888; line-height: 1.7; margin-bottom: 16px; max-width: 620px; margin-left: auto; margin-right: auto; }
+    .hero-sub { font-size: 14px; color: #555; margin-bottom: 48px; }
+
+    /* AUDIT WIDGET */
+    .audit-widget { background: #141414; border: 1px solid #252525; border-radius: 20px; padding: 36px; max-width: 660px; margin: 0 auto 100px; box-shadow: 0 0 60px #6c47ff11; }
+    .audit-widget h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .audit-widget p { font-size: 14px; color: #666; margin-bottom: 20px; }
+    .audit-input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .audit-input-row input { flex: 1; min-width: 200px; background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 12px 16px; border-radius: 8px; font-size: 14px; }
+    .audit-input-row input:focus { outline: none; border-color: #6c47ff; }
+    .audit-input-row select { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 12px 16px; border-radius: 8px; font-size: 14px; }
+    .audit-input-row button { background: #6c47ff; color: #fff; border: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .audit-input-row button:hover { background: #5a38e0; }
+    .audit-input-row button:disabled { background: #333; color: #666; cursor: default; }
+    .audit-result-box { margin-top: 20px; padding: 20px; background: #0f0f0f; border-radius: 12px; display: none; }
+    .audit-result-box.show { display: block; }
+    .result-score { font-size: 48px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+    .result-label { text-align: center; font-size: 14px; color: #888; margin-bottom: 20px; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .result-card { background: #1a1a1a; border-radius: 8px; padding: 14px; text-align: center; }
+    .result-card .rc-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 6px; }
+    .result-card .rc-value { font-size: 20px; font-weight: 700; }
+    .result-cta { background: #6c47ff; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; }
+    .result-cta:hover { background: #5a38e0; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #555; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* LOGOS / SOCIAL PROOF */
+    .social-proof { text-align: center; padding: 0 40px 80px; }
+    .social-proof p { font-size: 12px; color: #444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+    .ai-logos { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+    .ai-logo { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px 20px; font-size: 13px; color: #666; font-weight: 600; }
+
+    /* STATS */
+    .stats-bar { background: #111; border-top: 1px solid #1e1e1e; border-bottom: 1px solid #1e1e1e; padding: 48px 40px; display: flex; justify-content: center; gap: 80px; flex-wrap: wrap; }
+    .stat-item { text-align: center; }
+    .stat-item .num { font-size: 40px; font-weight: 900; color: #6c47ff; letter-spacing: -1px; }
+    .stat-item .lbl { font-size: 13px; color: #666; margin-top: 6px; }
+
+    /* FEATURES */
+    .features { padding: 100px 40px; max-width: 1100px; margin: 0 auto; }
+    .section-title { text-align: center; font-size: 36px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+    .section-sub { text-align: center; color: #666; font-size: 16px; margin-bottom: 60px; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .feature-card { background: #141414; border: 1px solid #222; border-radius: 16px; padding: 28px; transition: border-color 0.2s; }
+    .feature-card:hover { border-color: #6c47ff44; }
+    .feature-icon { font-size: 32px; margin-bottom: 16px; }
+    .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .feature-card p { font-size: 13px; color: #666; line-height: 1.7; }
+
+    /* HOW */
+    .how { padding: 100px 40px; max-width: 900px; margin: 0 auto; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .step { background: #141414; border: 1px solid #222; border-radius: 16px; padding: 28px; position: relative; }
+    .step-num { font-size: 11px; color: #6c47ff; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+    .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .step p { font-size: 13px; color: #666; line-height: 1.7; }
+
+    /* PRICING */
+    .pricing { padding: 100px 40px; max-width: 1060px; margin: 0 auto; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .pricing-card { background: #141414; border: 1px solid #222; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; }
+    .pricing-card.popular { border-color: #6c47ff; background: #160d2e; }
+    .pricing-tag { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .pricing-name { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .pricing-price { font-size: 38px; font-weight: 900; color: #6c47ff; margin-bottom: 4px; letter-spacing: -1px; }
+    .pricing-period { font-size: 12px; color: #555; margin-bottom: 20px; }
+    .pricing-features { list-style: none; font-size: 13px; color: #777; line-height: 2.2; flex: 1; }
+    .pricing-btn { margin-top: 20px; background: #6c47ff; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; }
+    .pricing-btn:hover { background: #5a38e0; }
+    .pricing-btn.outline { background: transparent; border: 1px solid #333; color: #888; }
+    .pricing-btn.outline:hover { border-color: #6c47ff; color: #b197fc; background: transparent; }
+    .popular-tag { text-align: center; font-size: 11px; color: #6c47ff; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+
+    /* FAQ */
+    .faq { padding: 100px 40px; max-width: 700px; margin: 0 auto; }
+    details { background: #141414; border: 1px solid #222; border-radius: 12px; padding: 20px; cursor: pointer; margin-bottom: 10px; }
+    details summary { font-weight: 600; font-size: 15px; list-style: none; }
+    details p { margin-top: 12px; color: #666; font-size: 14px; line-height: 1.7; }
+
+    /* CTA FINAL */
+    .cta-final { background: linear-gradient(135deg, #0d0820 0%, #0a1a0d 100%); border-top: 1px solid #1e1e1e; border-bottom: 1px solid #1e1e1e; padding: 100px 40px; text-align: center; }
+    .cta-final h2 { font-size: 40px; font-weight: 900; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .cta-final p { color: #666; font-size: 16px; margin-bottom: 36px; line-height: 1.7; }
+    .cta-final button { background: #6c47ff; color: #fff; border: none; padding: 16px 44px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+    .cta-final button:hover { background: #5a38e0; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
+    .modal-box { background: #141414; border: 1px solid #252525; border-radius: 20px; padding: 40px; max-width: 440px; width: 90%; position: relative; }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #555; font-size: 24px; cursor: pointer; }
+    .modal-close:hover { color: #fff; }
+    .modal-input { width: 100%; background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-top: 6px; }
+    .modal-input:focus { outline: none; border-color: #6c47ff; }
+
+    /* FOOTER */
+    footer { background: #0a0a0a; border-top: 1px solid #1a1a1a; padding: 28px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    footer p { font-size: 13px; color: #444; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 13px; color: #555; }
+    .footer-links a:hover { color: #6c47ff; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .features-grid, .steps, .pricing-grid { grid-template-columns: 1fr; }
+      .stats-bar { gap: 40px; }
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Puls<span>IA</span></div>
+  <div class="nav-links">
+    <a href="#como-funciona">Como funciona</a>
+    <a href="#precios">Precios</a>
+    <a href="/rankings">Rankings</a>
+    <a href="/panel" style="color:#6c47ff">Panel</a>
+  </div>
+  <button class="nav-cta" onclick="document.getElementById('audit-section').scrollIntoView({behavior:'smooth'})">Auditar gratis</button>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">
+    <span>🤖</span> AI Presence Intelligence — ChatGPT · Gemini · Perplexity
+  </div>
+  <h1>Tu marca es <span class="highlight">invisible</span> para las IAs.<br>Eso tiene <span class="highlight2">solución.</span></h1>
+  <p>PulsIA mide cuánto aparece tu negocio en las respuestas de inteligencia artificial y te da las herramientas para dominarlo.</p>
+  <p class="hero-sub">El 73% de las empresas en Colombia tienen 0% de presencia en IA.</p>
+</section>
+
+<section id="audit-section" class="audit-widget">
+  <h2>Auditoría gratuita</h2>
+  <p>Descubre tu PulsIA Score en 60 segundos</p>
+  <div class="audit-input-row">
+    <input type="url" id="hero-url" placeholder="https://tunegocio.com" />
+    <select id="hero-sector">
+      <option value="general">General</option>
+      <option value="real_estate">Inmobiliaria</option>
+      <option value="health">Salud / Clinica</option>
+      <option value="restaurant">Restaurante</option>
+      <option value="hotel">Hotel</option>
+      <option value="media">Medios</option>
+      <option value="legal">Legal</option>
+      <option value="education">Educacion</option>
+    </select>
+    <button id="hero-btn" onclick="runHeroAudit()">Auditar gratis</button>
+  </div>
+  <div class="audit-result-box" id="hero-result"></div>
+</section>
+
+<div class="social-proof">
+  <p>Optimizado para aparecer en</p>
+  <div class="ai-logos">
+    <div class="ai-logo">ChatGPT</div>
+    <div class="ai-logo">Gemini</div>
+    <div class="ai-logo">Perplexity</div>
+    <div class="ai-logo">Claude</div>
+    <div class="ai-logo">Copilot</div>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="num">+500</div><div class="lbl">Sitios auditados</div></div>
+  <div class="stat-item"><div class="num">8.2</div><div class="lbl">Score promedio (critico)</div></div>
+  <div class="stat-item"><div class="num">$1.2K</div><div class="lbl">RAR promedio/mes</div></div>
+  <div class="stat-item"><div class="num">24h</div><div class="lbl">Tiempo de entrega</div></div>
+</div>
+
+<section class="features">
+  <div class="section-title">Por que PulsIA</div>
+  <div class="section-sub">La unica plataforma que mide tu presencia real en inteligencia artificial</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>PulsIA Score multicapa</h3>
+      <p>Mide 5 dimensiones: semantica, autoridad, tecnica, conversacional y confianza. Un score de 0 a 100 que refleja tu visibilidad real en IA.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>AI Share of Answer</h3>
+      <p>Mide que porcentaje de las respuestas de ChatGPT y Gemini mencionan tu marca cuando los clientes buscan tu tipo de servicio.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧬</div>
+      <h3>Semantic Layer</h3>
+      <p>Genera automaticamente los archivos JSON-LD, TXT y XML que las IAs necesitan para entender y recomendar tu negocio.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <h3>Rankings publicos</h3>
+      <p>Compara tu visibilidad con otras empresas de tu sector. Aparece en el ranking publico de PulsIA y gana credibilidad.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💰</div>
+      <h3>Revenue at Risk</h3>
+      <p>Calcula exactamente cuanto dinero estas perdiendo cada mes por no aparecer en las busquedas de IA. El argumento mas poderoso.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Auditoria en 60 segundos</h3>
+      <p>Sin registrarte ni dar datos de pago. Ingresa tu URL y en un minuto tienes el diagnostico completo de tu sitio.</p>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="como-funciona">
+  <div class="section-title">Como funciona</div>
+  <div class="section-sub">En 3 pasos pasas de invisible a recomendado por las IAs</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">Paso 01</div>
+      <h3>Auditoria gratuita</h3>
+      <p>Analizamos tu sitio en 5 dimensiones y calculamos tu PulsIA Score y AI Share of Answer en tiempo real.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">Paso 02</div>
+      <h3>Reporte + Semantic Layer</h3>
+      <p>Recibes el diagnostico completo y los archivos listos para instalar en tu sitio web.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">Paso 03</div>
+      <h3>Implementacion en 24h</h3>
+      <p>Tu sitio comienza a aparecer en las respuestas de IA cuando los clientes buscan tu servicio.</p>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="precios">
+  <div class="section-title">Planes y precios</div>
+  <div class="section-sub">Elige el nivel de optimizacion que necesita tu negocio</div>
+  <div class="pricing-grid">
+
+    <div class="pricing-card">
+      <div class="pricing-tag">P1</div>
+      <div class="pricing-name">Reporte IA</div>
+      <div class="pricing-price">$49</div>
+      <div class="pricing-period">USD · pago unico</div>
+      <ul class="pricing-features">
+        <li>✅ PulsIA Score completo</li>
+        <li>✅ 5 dimensiones auditadas</li>
+        <li>✅ Revenue at Risk</li>
+        <li>✅ Plan de accion</li>
+        <li>✅ Entrega en 24h</li>
+      </ul>
+      <button class="pricing-btn" onclick="openPayment('P1')">Comprar P1</button>
+    </div>
+
+    <div class="pricing-card popular">
+      <div class="popular-tag">MAS POPULAR</div>
+      <div class="pricing-tag">P2</div>
+      <div class="pricing-name">Semantic Layer</div>
+      <div class="pricing-price">$99</div>
+      <div class="pricing-period">USD · pago unico</div>
+      <ul class="pricing-features">
+        <li>✅ Todo lo de P1</li>
+        <li>✅ JSON-LD completo</li>
+        <li>✅ Archivo TXT para IAs</li>
+        <li>✅ XML estructurado</li>
+        <li>✅ Garantia 30 dias</li>
+      </ul>
+      <button class="pricing-btn" onclick="openPayment('P2')">Comprar P2</button>
+    </div>
+
+    <div class="pricing-card">
+      <div class="pricing-tag">P3</div>
+      <div class="pricing-name">Web AI-Ready</div>
+      <div class="pricing-price" style="color:#b197fc">$499</div>
+      <div class="pricing-period">USD · pago unico</div>
+      <ul class="pricing-features">
+        <li>✅ Todo lo de P2</li>
+        <li>✅ Rediseno completo</li>
+        <li>✅ Contenido optimizado IA</li>
+        <li>✅ SEO tecnico completo</li>
+        <li>✅ Soporte 60 dias</li>
+      </ul>
+      <button class="pricing-btn outline" onclick="openPayment('P3')">Comprar P3</button>
+    </div>
+
+    <div class="pricing-card">
+      <div class="pricing-tag">P4</div>
+      <div class="pricing-name">Web + Automatizacion</div>
+      <div class="pricing-price" style="color:#ffd43b">$2.000</div>
+      <div class="pricing-period">USD + $200/mes</div>
+      <ul class="pricing-features">
+        <li>✅ Todo lo de P3</li>
+        <li>✅ Agente WhatsApp 24/7</li>
+        <li>✅ Automatizacion de ventas</li>
+        <li>✅ CRM integrado</li>
+        <li>✅ Soporte ilimitado</li>
+      </ul>
+      <button class="pricing-btn outline" style="color:#ffd43b;border-color:#3a3a1a" onclick="openPayment('P4')">Comprar P4</button>
+    </div>
+
+  </div>
+</section>
+
+<section class="faq">
+  <div class="section-title">Preguntas frecuentes</div>
+  <div class="section-sub">Todo lo que necesitas saber</div>
+
+  <details>
+    <summary>Que es el PulsIA Score?</summary>
+    <p>Es una puntuacion de 0 a 100 que mide que tan preparado esta tu sitio para ser encontrado y recomendado por ChatGPT, Gemini, Perplexity y otros modelos de IA. Se calcula en 5 dimensiones: semantica, autoridad, tecnica, conversacional y confianza.</p>
+  </details>
+  <details>
+    <summary>Que es el AI Share of Answer (ASA)?</summary>
+    <p>Es el porcentaje de las respuestas de IA que mencionan tu marca cuando los clientes buscan tu tipo de servicio. Un ASA de 0% significa que eres completamente invisible para las IAs.</p>
+  </details>
+  <details>
+    <summary>Que es el Revenue at Risk (RAR)?</summary>
+    <p>Es el dinero que estas dejando de ganar cada mes porque tu sitio no aparece en las busquedas de IA. Lo calculamos basado en el trafico estimado de tu sector y tu score actual.</p>
+  </details>
+  <details>
+    <summary>En cuanto tiempo recibo mi entregable?</summary>
+    <p>Maximo 24 horas despues de confirmado el pago. Para P1 y P2 generalmente es inmediato. Para P3 y P4 nos contactamos contigo para coordinar los detalles.</p>
+  </details>
+  <details>
+    <summary>Tiene garantia?</summary>
+    <p>P2, P3 y P4 tienen garantia de 30 dias. Si no ves mejoras en tu score despues de implementar, te devolvemos el dinero sin preguntas.</p>
+  </details>
+</section>
+
+<section class="cta-final">
+  <h2>Listo para aparecer en las IAs?</h2>
+  <p>Cada dia que pasa sin optimizar tu sitio es dinero que se va a tu competencia.<br>Audita gratis ahora — 60 segundos, sin registro.</p>
+  <button onclick="document.getElementById('audit-section').scrollIntoView({behavior:'smooth'})">Auditar mi sitio gratis</button>
+</section>
+
+<div id="payment-modal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closePayment()">x</button>
+    <h2 style="font-size:20px;margin-bottom:8px" id="modal-title">Completar compra</h2>
+    <p style="font-size:13px;color:#666;margin-bottom:24px" id="modal-desc">Seras redirigido a MercadoPago</p>
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;color:#666;display:block">Tu sitio web</label>
+      <input type="url" id="modal-url" placeholder="https://tunegocio.com" class="modal-input" />
+    </div>
+    <div style="margin-bottom:24px">
+      <label style="font-size:13px;color:#666;display:block">Tu email</label>
+      <input type="email" id="modal-email" placeholder="tu@email.com" class="modal-input" />
+    </div>
+    <button id="modal-pay-btn" onclick="processPayment()" style="width:100%;background:#6c47ff;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">Pagar con MercadoPago</button>
+    <p style="text-align:center;font-size:11px;color:#444;margin-top:12px">Pago seguro · SSL · MercadoPago</p>
+  </div>
+</div>
+
+<footer>
+  <p>2026 PulsIA · AI Presence Intelligence</p>
+  <div class="footer-links">
+    <a href="/rankings">Rankings</a>
+    <a href="/panel">Panel</a>
+    <a href="#precios">Precios</a>
+  </div>
+</footer>
+
+<script>
+  const API = 'https://webpulse-kqgm.onrender.com'
+  const RAR_BY_SECTOR = { real_estate:7350, health:3200, restaurant:840, hotel:2450, general:1575, media:2000, legal:3000, education:1800 }
+  let currentProduct = null
+  let auditedUrl = ''
+
+  function rarEstimate(sector, score) {
+    return Math.round((RAR_BY_SECTOR[sector]||1575) * (score/10))
+  }
+
+  async function runHeroAudit() {
+    const url    = document.getElementById('hero-url').value.trim()
+    const sector = document.getElementById('hero-sector').value
+    const btn    = document.getElementById('hero-btn')
+    const result = document.getElementById('hero-result')
+    if(!url){ alert('Ingresa la URL de tu sitio web'); return }
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Analizando...'
+    result.className = 'audit-result-box'
+    try {
+      const res  = await fetch(API+'/api/audit', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url, sector}) })
+      const data = await res.json()
+      if(data.error) throw new Error(data.error)
+      auditedUrl = url
+      const rar        = rarEstimate(sector, data.score)
+      const scoreColor = data.score>=7?'#ff6b6b':data.score>=4?'#ffa94d':'#69db7c'
+      const verdict    = data.score>=7?'CRITICO — Invisible para las IAs':data.score>=4?'MEJORABLE — Visibilidad parcial':'ACEPTABLE — Buena visibilidad'
+      const ps         = data.pulsia_score ? `<div class="result-card"><div class="rc-label">PulsIA Score</div><div class="rc-value" style="color:#74c0fc">${data.pulsia_score}/100</div></div>` : ''
+      result.innerHTML = `
+        <div class="result-score" style="color:${scoreColor}">${data.score}<span style="font-size:24px;color:#555">/10</span></div>
+        <div class="result-label">${verdict}</div>
+        <div class="result-grid">
+          <div class="result-card"><div class="rc-label">Revenue en riesgo</div><div class="rc-value" style="color:#69db7c">$${rar.toLocaleString()}/mes</div></div>
+          <div class="result-card"><div class="rc-label">Problemas criticos</div><div class="rc-value" style="color:#ff6b6b">${data.critical_count}</div></div>
+          ${ps}
+          <div class="result-card"><div class="rc-label">Producto sugerido</div><div class="rc-value" style="color:#b197fc">${data.product_assigned}</div></div>
+        </div>
+        <button class="result-cta" onclick="openPayment('${data.product_assigned}')">
+          Solucionar ahora — ${data.product_assigned} desde $${data.product_assigned==='P1'?49:data.product_assigned==='P2'?99:data.product_assigned==='P3'?499:2000} USD
+        </button>`
+      result.classList.add('show')
+      result.scrollIntoView({behavior:'smooth', block:'center'})
+    } catch(err) {
+      result.innerHTML = `<div style="color:#ff6b6b;text-align:center;padding:20px">Error: ${err.message}</div>`
+      result.classList.add('show')
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = 'Auditar gratis'
+    }
+  }
+
+  function openPayment(product) {
+    currentProduct = product
+    const prices = {P1:'$49 USD', P2:'$99 USD', P3:'$499 USD', P4:'$2,000 USD'}
+    const names  = {P1:'Reporte IA', P2:'Semantic Layer', P3:'Web AI-Ready', P4:'Web + Automatizacion'}
+    document.getElementById('modal-title').textContent = `${product} — ${names[product]}`
+    document.getElementById('modal-desc').textContent  = `${prices[product]} · Pago seguro con MercadoPago`
+    if(auditedUrl) document.getElementById('modal-url').value = auditedUrl
+    document.getElementById('payment-modal').style.display = 'flex'
+  }
+
+  function closePayment() { document.getElementById('payment-modal').style.display = 'none' }
+
+  async function processPayment() {
+    const email = document.getElementById('modal-email').value.trim()
+    const url   = document.getElementById('modal-url').value.trim()
+    const btn   = document.getElementById('modal-pay-btn')
+    if(!email){ alert('Ingresa tu email'); return }
+    if(!url)  { alert('Ingresa la URL de tu sitio'); return }
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> Procesando...'
+    try {
+      const res  = await fetch(API+'/api/payment/create', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ product: currentProduct, email, url }) })
+      const data = await res.json()
+      if(data.error) throw new Error(data.error)
+      window.location.href = data.checkout_url
+    } catch(err) {
+      alert('Error: ' + err.message)
+      btn.disabled = false
+      btn.innerHTML = 'Pagar con MercadoPago'
+    }
+  }
+
+  document.getElementById('payment-modal').addEventListener('click', function(e) { if(e.target===this) closePayment() })
+  document.addEventListener('keydown', function(e) { if(e.key==='Escape') closePayment() })
+</script>
+</body>
+</html>
