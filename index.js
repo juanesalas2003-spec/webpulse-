@@ -167,7 +167,7 @@ app.post('/api/audit/batch', async (req, res) => {
       let prospect
       if (existing) {
         await supabase.from('prospects')
-          .update({ url, sector, score: combinedScore, status: 'audited', product_assigned: product })
+          ..update({ url, sector, score: pulsiaResult.pulsia_score, status: 'audited', product_assigned: product })
           .eq('id', existing.id)
         prospect = existing
       } else {
