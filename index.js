@@ -435,4 +435,50 @@ app.post('/api/rankings/update', async (req, res) => {
 })
 // ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
+// Badge embebible
+app.get('/badge.js', async (req, res) => {
+  const domain = req.query.domain
+  if (!domain) return res.status(400).send('// domain requerido')
+
+  const { data: prospect } = await supabase
+    .from('prospects')
+    .select('domain, score')
+    .eq('domain', domain)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (!prospect) return res.send(`// Dominio no encontrado en PulsIA`)
+
+  const score = Math.round(prospect.score || 0)
+  const level = score >= 80 ? 'Gold AI Ready' : score >= 60 ? 'Silver AI Ready' : 'Bronze AI Ready'
+  const color = score >= 80 ? '#FAC775' : score >= 60 ? '#B4B2A9' : '#F0997B'
+
+  const js = `
+(function(){
+  var d=document.createElement('a');
+  d.href='https://webpulse-kqgm.onrender.com/verify/${domain}';
+  d.target='_blank';
+  d.style='display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid #e2e2e2;border-radius:10px;text-decoration:none;font-family:sans-serif;font-size:12px;color:#111;background:#fff';
+  d.innerHTML='<span style="background:#0a1628;width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#6c9fff;font-size:14px">✦</span><span><strong>PulsIA Certified</strong><br><span style="color:#666">Score ${score} · ${level}</span></span>';
+  document.currentScript.parentNode.insertBefore(d,document.currentScript);
+})();`
+
+  res.setHeader('Content-Type', 'application/javascript')
+  res.send(js)
+})
+
+// Página de verificación
+app.get('/verify/:domain', async (req, res) => {
+  const { data } = await supabase
+    .from('prospects')
+    .select('domain, score, created_at')
+    .eq('domain', req.params.domain)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (!data) return res.status(404).json({ error: 'No encontrado' })
+  res.json({ domain: data.domain, score: Math.round(data.score), certified: true, date: data.created_at })
+})
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
