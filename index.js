@@ -14,6 +14,7 @@ import { calculateRAR }       from './src/rar-calculator.js'
 import { supabase }           from './src/db.js'
 import { scorePulsia }        from './src/pulsia-scorer.js'
 import { generateSemanticLayer } from './semantic-layer.js'
+
 const app       = express()
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -26,11 +27,13 @@ app.use((req, res, next) => {
 
 // ─── Landing page ─────────────────────────────────────────
 app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
   res.send(readFileSync(join(__dirname, 'landing.html'), 'utf8'))
 })
 
 // ─── Panel de administración ─────────────────────────────
 app.get('/panel', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
   res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))
 })
 
@@ -70,7 +73,6 @@ app.post('/api/audit', async (req, res) => {
     const rar              = calculateRAR(sector, score)
     const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
 
-    // ─── PulsIA Score multicapa ───────────────────────────
     const pulsiaResult = scorePulsia({ ...extracted, url }, sector)
 
     await supabase.from('audits').insert({
@@ -90,7 +92,6 @@ app.post('/api/audit', async (req, res) => {
       .update({ score: combinedScore, status: 'audited', product_assigned: product })
       .eq('id', prospect.id)
 
-    // Siempre generar reporte P1
     const report = generateReport(url, combinedScore, flags, sector, entityDensity, rar)
     await supabase.from('outputs').insert({
       prospect_id: prospect.id,
@@ -98,7 +99,6 @@ app.post('/api/audit', async (req, res) => {
       payload:     report
     })
 
-    // Si es P2, también guardar JSON-LD
     if (product === 'P2') {
       const jsonld = generateJsonLD(extracted, sector, domain)
       await supabase.from('outputs').insert({
@@ -131,7 +131,6 @@ app.post('/api/audit', async (req, res) => {
       product_assigned: product,
       flags_count:      flags.length,
       critical_count:   flags.filter(f => f.severity === 'critical').length,
-      // ─── PulsIA Score ─────────────────────────────────
       pulsia_score:     pulsiaResult.pulsia_score,
       badge_level:      pulsiaResult.badge_level,
       dimensions:       pulsiaResult.dimensions,
@@ -247,50 +246,37 @@ app.patch('/api/prospects/:id/status', async (req, res) => {
   res.json(data)
 })
 
-// ─── MercadoPago — crear preferencia de pago ─────────────
+// ─── MercadoPago ──────────────────────────────────────────
 app.post('/api/payment/create', async (req, res) => {
-  const { product, email = 'cliente@webpulse.co', url = '' } = req.body
-
+  const { product, email = 'cliente@pulsia.ai', url = '' } = req.body
   const products = {
-    P1: { title: 'Webpulse P1 — Reporte de Auditoría IA', price: 49 },
-    P2: { title: 'Webpulse P2 — JSON-LD Optimizado',      price: 99 },
-    P3: { title: 'Webpulse P3 — Web Completa AI-Ready',   price: 499 },
-    P4: { title: 'Webpulse P4 — Web + Jelou Integrado',   price: 2000 }
+    P1: { title: 'PulsIA P1 — Reporte de Auditoría IA', price: 49 },
+    P2: { title: 'PulsIA P2 — Semantic Layer',           price: 99 },
+    P3: { title: 'PulsIA P3 — Web Completa AI-Ready',    price: 499 },
+    P4: { title: 'PulsIA P4 — Web + Automatización',     price: 2000 }
   }
-
   const item = products[product]
   if (!item) return res.status(400).json({ error: 'Producto inválido' })
-
   try {
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` },
       body: JSON.stringify({
-        items: [{
-          title:      item.title,
-          quantity:   1,
-          unit_price: item.price,
-          currency_id: 'USD'
-        }],
+        items: [{ title: item.title, quantity: 1, unit_price: item.price, currency_id: 'USD' }],
         payer: { email },
         back_urls: {
-          success: `https://webpulse-production-7f4c.up.railway.app/gracias?product=${product}&url=${encodeURIComponent(url)}`,
-          failure: `https://webpulse-production-7f4c.up.railway.app/#precios`,
-          pending: `https://webpulse-production-7f4c.up.railway.app/#precios`
+          success: `https://webpulse-kqgm.onrender.com/gracias?product=${product}&url=${encodeURIComponent(url)}`,
+          failure: `https://webpulse-kqgm.onrender.com/#precios`,
+          pending: `https://webpulse-kqgm.onrender.com/#precios`
         },
         auto_return: 'approved',
-        statement_descriptor: 'WEBPULSE',
+        statement_descriptor: 'PULSIA',
         external_reference: `${product}-${Date.now()}`
       })
     })
-
     const data = await response.json()
     if (!data.id) throw new Error(data.message || 'Error creando preferencia')
     res.json({ checkout_url: data.init_point, preference_id: data.id })
-
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -299,9 +285,10 @@ app.post('/api/payment/create', async (req, res) => {
 // ─── Página de gracias ────────────────────────────────────
 app.get('/gracias', (req, res) => {
   const { product, url } = req.query
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
   res.send(`<!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><title>¡Pago exitoso! — Webpulse</title>
+<head><meta charset="UTF-8"><title>¡Pago exitoso! — PulsIA</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#f0f0f0;display:flex;align-items:center;justify-content:center;min-height:100vh}
 .card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:48px;text-align:center;max-width:480px}
 h1{font-size:32px;margin-bottom:16px}p{color:#888;margin-bottom:24px;line-height:1.6}
@@ -312,16 +299,15 @@ a{background:#6c47ff;color:#fff;padding:12px 32px;border-radius:8px;text-decorat
 <div style="font-size:64px;margin-bottom:16px">✅</div>
 <div class="badge">${product} activado</div>
 <h1>¡Pago exitoso!</h1>
-<p>Gracias por confiar en Webpulse. Recibirás tu entregable en menos de 24 horas en el correo registrado.</p>
+<p>Gracias por confiar en PulsIA. Recibirás tu entregable en menos de 24 horas.</p>
 <p style="font-size:13px">Sitio auditado: <strong>${url || 'pendiente'}</strong></p>
-<a href="https://webpulse-production-7f4c.up.railway.app">← Volver al inicio</a>
+<a href="https://webpulse-kqgm.onrender.com">← Volver al inicio</a>
 </div></body></html>`)
 })
 
-// ─── Prospección automática por sector ───────────────────
+// ─── Prospección automática ───────────────────────────────
 app.post('/api/prospect/search', async (req, res) => {
   const { sector = 'general', city = 'Colombia', limit = 10 } = req.body
-
   const queries = {
     real_estate: `agencias inmobiliarias ${city} sitio web`,
     health:      `clinicas medicas ${city} sitio web`,
@@ -329,34 +315,19 @@ app.post('/api/prospect/search', async (req, res) => {
     hotel:       `hoteles ${city} sitio web`,
     general:     `empresas ${city} sitio web`
   }
-
   const query = queries[sector] || queries.general
-
   try {
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.FIRECRAWL_API_KEY}`
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.FIRECRAWL_API_KEY}` },
       body: JSON.stringify({ query, limit })
     })
-
     const data = await response.json()
-
     if (!data.success) {
-      return res.status(402).json({
-        error: 'Sin créditos Firecrawl',
-        message: 'Recarga créditos en firecrawl.dev para activar esta función'
-      })
+      return res.status(402).json({ error: 'Sin créditos Firecrawl', message: 'Recarga créditos en firecrawl.dev' })
     }
-
-    const urls = (data.data || [])
-      .map(r => r.url)
-      .filter(u => u && u.startsWith('http'))
-
+    const urls = (data.data || []).map(r => r.url).filter(u => u && u.startsWith('http'))
     res.json({ urls, query, total: urls.length })
-
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -366,35 +337,23 @@ app.post('/api/prospect/search', async (req, res) => {
 app.post('/api/ai-scan', async (req, res) => {
   const { domain, brand, sector = 'general', city = 'Colombia', query_limit = 20 } = req.body
   if (!domain) return res.status(400).json({ error: 'domain requerido' })
-
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
   res.flushHeaders()
-
-  const send = (data) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`)
-  }
-
+  const send = (data) => { res.write(`data: ${JSON.stringify(data)}\n\n`) }
   try {
     const { runScan } = await import('./src/query-engine/scanner.js')
-
     send({ type: 'start', message: `Iniciando scan de ${domain}...` })
-
     const result = await runScan({
       domain,
       brand:      brand || domain.replace(/^www\./, '').split('.')[0],
-      sector,
-      city,
+      sector, city,
       queryLimit: parseInt(query_limit),
       engines:    ['gemini'],
-      onProgress: (progress) => {
-        send({ type: 'progress', ...progress })
-      }
+      onProgress: (progress) => { send({ type: 'progress', ...progress }) }
     })
-
     send({ type: 'complete', result })
-
   } catch (err) {
     console.error('[ai-scan] Error:', err.message)
     send({ type: 'error', message: err.message })
@@ -403,52 +362,35 @@ app.post('/api/ai-scan', async (req, res) => {
   }
 })
 
-// ─── Obtener historial de scans de una marca ──────────────
+// ─── Historial AI scans ───────────────────────────────────
 app.get('/api/ai-scan/:domain', async (req, res) => {
   const domain = req.params.domain
   try {
-    const { data: brand } = await supabase
-      .from('ai_brands')
-      .select('id, name, sector, city')
-      .eq('domain', domain)
-      .maybeSingle()
-
+    const { data: brand } = await supabase.from('ai_brands').select('id, name, sector, city').eq('domain', domain).maybeSingle()
     if (!brand) return res.status(404).json({ error: 'Marca no encontrada' })
-
-    const { data: snapshots } = await supabase
-      .from('ai_snapshots')
+    const { data: snapshots } = await supabase.from('ai_snapshots')
       .select('id, month, year, asa, aar, level, appearances, total_queries, created_at')
-      .eq('brand_id', brand.id)
-      .order('year', { ascending: false })
-      .order('month', { ascending: false })
-      .limit(12)
-
+      .eq('brand_id', brand.id).order('year', { ascending: false }).order('month', { ascending: false }).limit(12)
     res.json({ brand, snapshots: snapshots || [] })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
+
 // ─── Semantic Layer Generator ─────────────────────────────
 app.post('/api/semantic-layer', async (req, res) => {
   const { url, sector = 'general' } = req.body
   if (!url) return res.status(400).json({ error: 'url requerida' })
-
   try {
     const domain    = new URL(url).hostname
     const extracted = await scrapeUrl(url)
     const layer     = generateSemanticLayer(extracted, sector, domain)
-
-    res.json({
-      domain,
-      sector,
-      json: layer.json,
-      txt:  layer.txt,
-      xml:  layer.xml
-    })
+    res.json({ domain, sector, json: layer.json, txt: layer.txt, xml: layer.xml })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
+
 // ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
