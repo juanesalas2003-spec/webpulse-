@@ -85,7 +85,7 @@ app.post('/api/audit', async (req, res) => {
     const { product } = routeProduct(combinedScore)
 
     await supabase.from('prospects')
-      .update({ score: combinedScore, status: 'audited', product_assigned: product })
+      .update({ score: pulsiaResult.pulsia_score, status: 'audited', product_assigned: product })
       .eq('id', prospect.id)
 
     const report = generateReport(url, combinedScore, flags, sector, entityDensity, rar)
@@ -173,7 +173,7 @@ app.post('/api/audit/batch', async (req, res) => {
       } else {
         const { data } = await supabase
           .from('prospects')
-          .insert({ url, domain, sector, score: combinedScore, status: 'audited', product_assigned: product })
+          .insert({ url, domain, sector, score: pulsiaResult.pulsia_score, status: 'audited', product_assigned: product })
           .select().single()
         prospect = data
       }
