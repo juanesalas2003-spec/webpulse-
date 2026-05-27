@@ -28,8 +28,6 @@ app.use((req, res, next) => {
 // ─── Landing page ─────────────────────────────────────────
 app.get('/', (req, res) => {
 res.sendFile(join(__dirname, 'landing.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
-})
-
 app.get('/panel', (req, res) => {
   res.sendFile(join(__dirname, 'panel.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
@@ -167,7 +165,7 @@ app.post('/api/audit/batch', async (req, res) => {
       let prospect
       if (existing) {
         await supabase.from('prospects')
-          ..update({ url, sector, score: pulsiaResult.pulsia_score, status: 'audited', product_assigned: product })
+          .update({ url, sector, score: pulsiaResult.pulsia_score, status: 'audited', product_assigned: product })
           .eq('id', existing.id)
         prospect = existing
       } else {
