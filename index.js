@@ -27,7 +27,7 @@ app.use((req, res, next) => {
 
 // ─── Landing page ─────────────────────────────────────────
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, '..', 'landing.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+ res.sendFile(join(__dirname, 'landing.html')), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
 
 app.get('/panel', (req, res) => {
