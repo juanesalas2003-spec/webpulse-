@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rankings de Visibilidad IA — PulsIA</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #f0f0f0; min-height: 100vh; }
+
+    /* Header */
+    header { background: linear-gradient(135deg, #0d1a2e 0%, #1a0a2e 100%); padding: 60px 40px 40px; text-align: center; border-bottom: 1px solid #1a2a3a; position: relative; overflow: hidden; }
+    header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, #6c47ff22 0%, transparent 70%); }
+    .header-badge { display: inline-block; background: #1a2a3a; border: 1px solid #6c47ff44; color: #74c0fc; padding: 4px 16px; border-radius: 20px; font-size: 12px; margin-bottom: 16px; letter-spacing: 1px; text-transform: uppercase; }
+    header h1 { font-size: 42px; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #74c0fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; position: relative; }
+    header p { color: #888; font-size: 16px; max-width: 500px; margin: 0 auto 32px; line-height: 1.6; position: relative; }
+    .header-link { display: inline-block; background: #6c47ff; color: #fff; padding: 10px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .header-link:hover { background: #5a38e0; }
+
+    /* Filters */
+    .filters { padding: 24px 40px; background: #0f0f0f; border-bottom: 1px solid #1a1a1a; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .filters select { background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .filters select:focus { outline: none; border-color: #6c47ff; }
+    .filter-label { font-size: 13px; color: #666; }
+
+    /* Main */
+    .main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+    .section-title { font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .section-title span { color: #444; font-size: 12px; }
+
+    /* Podium top 3 */
+    .podium { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 16px; margin-bottom: 40px; align-items: end; }
+    .podium-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 24px 20px; text-align: center; position: relative; transition: transform 0.2s; cursor: pointer; }
+    .podium-card:hover { transform: translateY(-4px); }
+    .podium-card.first { background: linear-gradient(135deg, #1a1a0a 0%, #2a2a0f 100%); border-color: #ffd70044; }
+    .podium-card.second { background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); border-color: #c0c0c044; }
+    .podium-card.third { background: linear-gradient(135deg, #1a0f0a 0%, #2a1a0f 100%); border-color: #cd7f3244; }
+    .podium-rank { font-size: 28px; margin-bottom: 8px; }
+    .podium-domain { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; word-break: break-all; }
+    .podium-industry { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 16px; }
+    .podium-score { font-size: 40px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .podium-score-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+    .podium-badge { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-top: 12px; }
+
+    /* Rest of rankings */
+    .rankings-list { display: flex; flex-direction: column; gap: 8px; }
+    .ranking-item { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: background 0.15s; }
+    .ranking-item:hover { background: #222; border-color: #333; }
+    .rank-num { font-size: 18px; font-weight: 700; color: #444; min-width: 32px; text-align: center; }
+    .rank-info { flex: 1; }
+    .rank-domain { font-size: 14px; font-weight: 600; color: #fff; }
+    .rank-meta { font-size: 12px; color: #666; margin-top: 2px; }
+    .rank-score { text-align: right; }
+    .rank-score-num { font-size: 22px; font-weight: 800; }
+    .rank-score-label { font-size: 10px; color: #555; }
+    .rank-badge { padding: 2px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; margin-top: 4px; display: inline-block; }
+    .rank-bars { display: flex; gap: 4px; margin-top: 6px; }
+    .rank-bar { height: 4px; border-radius: 2px; flex: 1; background: #2a2a2a; }
+    .rank-bar.filled { background: #6c47ff; }
+
+    /* Badge colors */
+    .badge-platinum { background: #1a0a2a; color: #e5e4e2; border: 1px solid #b4b4ff; }
+    .badge-gold     { background: #2a2a0a; color: #ffd700; }
+    .badge-silver   { background: #1a1a2a; color: #c0c0c0; }
+    .badge-bronze   { background: #1a0f0a; color: #cd7f32; }
+    .badge-none     { background: #1a1a1a; color: #555; }
+
+    /* Score colors */
+    .score-high { color: #69db7c; }
+    .score-mid  { color: #ffa94d; }
+    .score-low  { color: #ff6b6b; }
+
+    /* Empty */
+    .empty { text-align: center; padding: 80px 20px; color: #444; }
+    .empty h3 { font-size: 20px; margin-bottom: 8px; color: #555; }
+    .empty p { font-size: 14px; line-height: 1.6; }
+
+    /* Stats bar */
+    .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+    .stat-mini { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px 16px; }
+    .stat-mini .sm-label { font-size: 11px; color: #555; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-mini .sm-value { font-size: 22px; font-weight: 700; color: #fff; }
+
+    /* Footer */
+    footer { text-align: center; padding: 40px 20px; color: #333; font-size: 13px; border-top: 1px solid #1a1a1a; margin-top: 60px; }
+    footer a { color: #6c47ff; text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .podium { grid-template-columns: 1fr; }
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+      header h1 { font-size: 28px; }
+      .main { padding: 24px 16px; }
+      .filters { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">Rankings Públicos</div>
+  <h1>⚡ PulsIA Rankings</h1>
+  <p>Las empresas con mayor visibilidad en inteligencia artificial. Actualizado en tiempo real.</p>
+  <a href="/" class="header-link">← Volver al inicio</a>
+</header>
+
+<div class="filters">
+  <span class="filter-label">Filtrar por:</span>
+  <select id="filter-industry" onchange="loadRankings()">
+    <option value="">Todos los sectores</option>
+    <option value="general">General</option>
+    <option value="health">Salud / Clínica</option>
+    <option value="real_estate">Inmobiliaria</option>
+    <option value="restaurant">Restaurante</option>
+    <option value="hotel">Hotel</option>
+    <option value="media">Medios / Noticias</option>
+    <option value="ecommerce">E-commerce</option>
+    <option value="education">Educación</option>
+    <option value="legal">Legal / Abogados</option>
+  </select>
+  <select id="filter-limit" onchange="loadRankings()">
+    <option value="10">Top 10</option>
+    <option value="20">Top 20</option>
+    <option value="50">Top 50</option>
+  </select>
+</div>
+
+<div class="main">
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-mini"><div class="sm-label">Empresas rankeadas</div><div class="sm-value" id="stat-total">—</div></div>
+    <div class="stat-mini"><div class="sm-label">Score promedio</div><div class="sm-value" id="stat-avg">—</div></div>
+    <div class="stat-mini"><div class="sm-label">Con badge</div><div class="sm-value" id="stat-badge">—</div></div>
+    <div class="stat-mini"><div class="sm-label">Sectores activos</div><div class="sm-value" id="stat-sectors">—</div></div>
+  </div>
+
+  <div class="section-title">
+    🏆 TOP 3 — Mayor visibilidad IA
+    <span id="last-update">Cargando...</span>
+  </div>
+  <div class="podium" id="podium">
+    <div style="text-align:center;padding:40px;color:#333">Cargando...</div>
+  </div>
+
+  <div class="section-title">📋 Ranking completo</div>
+  <div class="rankings-list" id="rankings-list"></div>
+</div>
+
+<footer>
+  <p>Rankings generados por <a href="/">PulsIA</a> — Infraestructura de visibilidad en IA</p>
+  <p style="margin-top:8px">¿Tu empresa no aparece? <a href="/">Audita gratis tu sitio web</a></p>
+</footer>
+
+<script>
+  const API = 'https://webpulse-kqgm.onrender.com'
+
+  function badgeEmoji(b) {
+    return {platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉',none:''}[b]||''
+  }
+  function badgeClass(b) { return 'badge-'+(b||'none') }
+  function scoreColor(s) { return s>=75?'score-high':s>=45?'score-mid':'score-low' }
+  function podiumEmoji(i) { return ['🥇','🥈','🥉'][i]||'' }
+  function podiumClass(i) { return ['first','second','third'][i]||'' }
+
+  function formatIndustry(s) {
+    return {general:'General',health:'Salud',real_estate:'Inmobiliaria',restaurant:'Restaurante',hotel:'Hotel',media:'Medios',ecommerce:'E-commerce',education:'Educación',legal:'Legal'}[s]||s
+  }
+
+  function renderBars(score) {
+    const filled = Math.round((score/100)*5)
+    return Array.from({length:5},(_,i)=>`<div class="rank-bar ${i<filled?'filled':''}"></div>`).join('')
+  }
+
+  async function loadRankings() {
+    const industry = document.getElementById('filter-industry').value
+    const limit    = document.getElementById('filter-limit').value
+
+    let url = `${API}/api/rankings?limit=${limit}`
+    if (industry) url += `&industry=${industry}`
+
+    try {
+      const res  = await fetch(url)
+      const data = await res.json()
+
+      if (!data.length) {
+        document.getElementById('podium').innerHTML = '<div class="empty"><h3>Sin datos aún</h3><p>Audita sitios desde el panel para poblar el ranking.</p></div>'
+        document.getElementById('rankings-list').innerHTML = ''
+        return
+      }
+
+      // Stats
+      document.getElementById('stat-total').textContent   = data.length
+      document.getElementById('stat-avg').textContent     = Math.round(data.reduce((a,b)=>a+(b.pulsia_score||0),0)/data.length)
+      document.getElementById('stat-badge').textContent   = data.filter(d=>d.badge_level&&d.badge_level!=='none').length
+      document.getElementById('stat-sectors').textContent = [...new Set(data.map(d=>d.industry))].length
+      document.getElementById('last-update').textContent  = 'Actualizado: '+new Date().toLocaleTimeString('es-CO')
+
+      // Podium top 3
+      const top3 = data.slice(0,3)
+      // Reorder: 2nd, 1st, 3rd for visual podium
+      const podiumOrder = top3.length >= 3 ? [top3[1],top3[0],top3[2]] : top3
+      document.getElementById('podium').innerHTML = podiumOrder.map((p,vi)=>{
+        if(!p) return '<div></div>'
+        const realIdx = top3.indexOf(p)
+        const sc = p.pulsia_score||0
+        return `<div class="podium-card ${podiumClass(realIdx)}" onclick="window.open('https://'+p.domain,'_blank')">
+          <div class="podium-rank">${podiumEmoji(realIdx)}</div>
+          <div class="podium-domain">${p.domain||p.company_name}</div>
+          <div class="podium-industry">${formatIndustry(p.industry)}</div>
+          <div class="podium-score ${scoreColor(sc)}">${sc}</div>
+          <div class="podium-score-label">PulsIA Score</div>
+          <div class="podium-badge ${badgeClass(p.badge_level)}">${badgeEmoji(p.badge_level)} ${(p.badge_level||'none').charAt(0).toUpperCase()+(p.badge_level||'none').slice(1)}</div>
+        </div>`
+      }).join('')
+
+      // Full list from 4th onwards
+      const rest = data.slice(3)
+      document.getElementById('rankings-list').innerHTML = rest.length ? rest.map((p,i)=>{
+        const sc = p.pulsia_score||0
+        return `<div class="ranking-item" onclick="window.open('https://'+p.domain,'_blank')">
+          <div class="rank-num">#${i+4}</div>
+          <div class="rank-info">
+            <div class="rank-domain">${p.domain||p.company_name}</div>
+            <div class="rank-meta">${formatIndustry(p.industry)} · ${p.city||'Colombia'}</div>
+            <div class="rank-bars">${renderBars(sc)}</div>
+          </div>
+          <div class="rank-score">
+            <div class="rank-score-num ${scoreColor(sc)}">${sc}</div>
+            <div class="rank-score-label">PulsIA</div>
+            <div class="rank-badge ${badgeClass(p.badge_level)}">${badgeEmoji(p.badge_level)} ${(p.badge_level||'none').charAt(0).toUpperCase()+(p.badge_level||'none').slice(1)}</div>
+          </div>
+        </div>`
+      }).join('') : '<div style="text-align:center;padding:20px;color:#444;font-size:13px">Solo hay 3 empresas rankeadas</div>'
+
+    } catch(err) {
+      document.getElementById('podium').innerHTML = `<div class="empty"><h3>Error cargando rankings</h3><p>${err.message}</p></div>`
+    }
+  }
+
+  loadRankings()
+  setInterval(loadRankings, 60000)
+</script>
+</body>
+</html>

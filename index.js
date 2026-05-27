@@ -386,7 +386,57 @@ app.post('/api/semantic-layer', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+// ─── Rankings públicos ────────────────────────────────────
+app.get('/rankings', (req, res) => {
+  res.sendFile(join(__dirname, 'rankings.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+})
 
+app.get('/api/rankings', async (req, res) => {
+  const { industry, city, limit = 10 } = req.query
+  try {
+    let query = supabase.from('pulsia_rankings').select('*').order('pulsia_score', { ascending: false })
+    if (industry) query = query.eq('industry', industry)
+    if (city)     query = query.eq('city', city)
+    query = query.limit(parseInt(limit))
+    const { data, error } = await query
+    if (error) throw error
+    res.json(data || [])
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/rankings/update', async (req, res) => {
+  const { prospect_id } = req.body
+  try {
+    const { data: prospect } = await supabase
+      .from('prospects_summary').select('*').eq('id', prospect_id).single()
+    if (!prospect) return res.status(404).json({ error: 'Prospect no encontrado' })
+
+    const { data: output } = await supabase
+      .from('outputs').select('payload').eq('prospect_id', prospect_id)
+      .eq('product', 'P1').order('created_at', { ascending: false }).limit(1).single()
+
+    const pulsiaScore = prospect.pulsia_score || 0
+    const badgeLevel  = prospect.badge_level  || 'none'
+
+    await supabase.from('pulsia_rankings').upsert({
+      prospect_id:  prospect.id,
+      company_name: prospect.domain,
+      domain:       prospect.domain,
+      industry:     prospect.sector || 'general',
+      city:         'Colombia',
+      pulsia_score: pulsiaScore,
+      seo_score:    prospect.score || 0,
+      badge_level:  badgeLevel,
+      last_updated: new Date().toISOString()
+    }, { onConflict: 'prospect_id' })
+
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 // ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
