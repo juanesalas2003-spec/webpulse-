@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulsIA — Analiza tu presencia en IA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #060608;
+    --surface: #0e0e12;
+    --border: rgba(255,255,255,0.08);
+    --accent: #7c5cfc;
+    --accent2: #00e5a0;
+    --text: #f0f0f8;
+    --muted: #888899;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--text); }
+  .logo span { color: var(--accent); }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 640px;
+    width: 100%;
+    padding: 4rem 1.5rem 2rem;
+    text-align: center;
+  }
+  .badge-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(124,92,252,0.12);
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: #a78bfa;
+    margin-bottom: 1.5rem;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  h1 em { font-style: normal; color: var(--accent2); }
+  .subtitle {
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+  }
+
+  /* ── Form card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 560px;
+    width: calc(100% - 3rem);
+    margin: 0 auto 3rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .form-full { grid-column: 1 / -1; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  input, select {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: #1a1a2e; }
+
+  .btn-submit {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-submit:hover { opacity: 0.9; }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Loading ── */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: var(--muted); font-size: 14px; }
+
+  /* ── Result ── */
+  .result { display: none; }
+
+  .score-hero {
+    text-align: center;
+    padding: 2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .score-circle {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    border: 3px solid var(--accent);
+  }
+  .score-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+  .score-label { font-size: 10px; color: var(--muted); }
+  .score-domain { font-size: 14px; color: var(--muted); margin-bottom: 0.5rem; }
+  .badge-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-gold     { background: rgba(250,199,117,0.15); color: #fac775; border: 1px solid rgba(250,199,117,0.3); }
+  .badge-silver   { background: rgba(180,178,169,0.15); color: #b4b2a9; border: 1px solid rgba(180,178,169,0.3); }
+  .badge-bronze   { background: rgba(240,153,123,0.15); color: #f0997b; border: 1px solid rgba(240,153,123,0.3); }
+  .badge-none     { background: rgba(136,136,153,0.15); color: #888899; border: 1px solid rgba(136,136,153,0.3); }
+
+  /* Dimensiones */
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .dim {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .dim-name { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .dim-score { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; }
+  .dim-score.good { color: var(--accent2); }
+  .dim-score.mid  { color: #fac775; }
+  .dim-score.bad  { color: #f0997b; }
+
+  /* Prioridades */
+  .priorities { margin-bottom: 1.5rem; }
+  .priorities h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+  .priority-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .priority-item:last-child { border-bottom: none; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot.critical { background: #f0997b; }
+  .dot.high     { background: #fac775; }
+  .dot.medium   { background: #888899; }
+
+  /* Acciones */
+  .actions { display: flex; flex-direction: column; gap: 0.75rem; }
+  .btn-action {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+  .btn-action:hover { background: rgba(255,255,255,0.08); }
+  .btn-action.primary {
+    background: rgba(0,229,160,0.1);
+    border-color: rgba(0,229,160,0.3);
+    color: var(--accent2);
+  }
+  .btn-action.primary:hover { background: rgba(0,229,160,0.15); }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(240,100,100,0.1);
+    border: 1px solid rgba(240,100,100,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    color: #f08080;
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  /* ── Features ── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    max-width: 560px;
+    width: calc(100% - 3rem);
+    margin: 0 auto 4rem;
+  }
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+  }
+  .feature-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .feature-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .feature-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  @media (max-width: 500px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .dims { grid-template-columns: 1fr; }
+    .features { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Puls<span>IA</span></div>
+</header>
+
+<div class="hero">
+  <div class="badge-top">⚡ Análisis gratuito — resultados en 30 segundos</div>
+  <h1>¿Cómo te ven las <em>IAs</em> a ti?</h1>
+  <p class="subtitle">Descubre tu score de presencia en ChatGPT, Gemini y Perplexity. Gratis, sin tarjeta de crédito.</p>
+</div>
+
+<div class="card" id="form-card">
+  <form id="signup-form">
+    <div class="form-grid">
+      <div>
+        <label>Nombre</label>
+        <input type="text" id="nombre" placeholder="Tu nombre" required>
+      </div>
+      <div>
+        <label>Sector</label>
+        <select id="sector">
+          <option value="general">General</option>
+          <option value="health">Salud</option>
+          <option value="real_estate">Inmobiliaria</option>
+          <option value="restaurant">Restaurante</option>
+          <option value="hotel">Hotel</option>
+        </select>
+      </div>
+      <div class="form-full">
+        <label>Sitio web</label>
+        <input type="url" id="url" placeholder="https://tuempresa.com" required>
+      </div>
+      <div>
+        <label>Email</label>
+        <input type="email" id="email" placeholder="tu@email.com" required>
+      </div>
+      <div>
+        <label>WhatsApp</label>
+        <input type="tel" id="whatsapp" placeholder="+57 300 000 0000">
+      </div>
+    </div>
+    <button type="submit" class="btn-submit" id="btn-submit">
+      ⚡ Analizar mi presencia IA
+    </button>
+    <div class="error-msg" id="error-msg"></div>
+  </form>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">Analizando tu sitio...</div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="score-hero">
+      <div class="score-domain" id="res-domain"></div>
+      <div class="score-circle" id="score-circle">
+        <div class="score-num" id="res-score">—</div>
+        <div class="score-label">/ 100</div>
+      </div>
+      <div class="badge-level" id="res-badge">—</div>
+    </div>
+
+    <div class="dims" id="res-dims"></div>
+
+    <div class="priorities" id="res-priorities">
+      <h3>Top prioridades de mejora</h3>
+      <div id="priorities-list"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-action primary" id="btn-download">
+        📄 Descargar Semantic Layer
+      </button>
+      <a href="https://webpulse-kqgm.onrender.com/rankings" class="btn-action" target="_blank">
+        🏆 Ver Rankings PulsIA
+      </a>
+      <button class="btn-action" id="btn-retry">
+        🔄 Analizar otro sitio
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="features">
+  <div class="feature">
+    <div class="feature-icon">🤖</div>
+    <div class="feature-title">Score multicapa</div>
+    <div class="feature-desc">5 dimensiones: semántica, autoridad, técnica, conversacional y confianza</div>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">📄</div>
+    <div class="feature-title">Semantic Layer</div>
+    <div class="feature-desc">Archivo listo para que las IAs te encuentren y te recomienden</div>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">🏆</div>
+    <div class="feature-title">Rankings</div>
+    <div class="feature-desc">Compara tu presencia IA contra competidores de tu sector</div>
+  </div>
+</div>
+
+<script>
+const API = 'https://webpulse-kqgm.onrender.com'
+let lastResult = null
+let lastUrl    = null
+
+const form       = document.getElementById('signup-form')
+const loading    = document.getElementById('loading')
+const result     = document.getElementById('result')
+const errorMsg   = document.getElementById('error-msg')
+const btnSubmit  = document.getElementById('btn-submit')
+const loadingTxt = document.getElementById('loading-text')
+
+const steps = [
+  'Accediendo al sitio...',
+  'Analizando estructura semántica...',
+  'Evaluando autoridad y confianza...',
+  'Calculando score multicapa...',
+  'Generando reporte...'
+]
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const url      = document.getElementById('url').value.trim()
+  const sector   = document.getElementById('sector').value
+  const nombre   = document.getElementById('nombre').value.trim()
+  const email    = document.getElementById('email').value.trim()
+  const whatsapp = document.getElementById('whatsapp').value.trim()
+
+  if (!url.startsWith('http')) {
+    showError('Por favor ingresa la URL completa (ej: https://tuempresa.com)')
+    return
+  }
+
+  errorMsg.style.display = 'none'
+  form.style.display = 'none'
+  loading.style.display = 'block'
+
+  let step = 0
+  const interval = setInterval(() => {
+    if (step < steps.length - 1) {
+      step++
+      loadingTxt.textContent = steps[step]
+    }
+  }, 3000)
+
+  try {
+    const res = await fetch(`${API}/api/audit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, sector, contact: whatsapp || email, channel: whatsapp ? 'whatsapp' : 'email' })
+    })
+    const data = await res.json()
+    clearInterval(interval)
+
+    if (!res.ok) throw new Error(data.error || 'Error en el análisis')
+
+    // Guardar datos del cliente en Supabase
+    if (email) {
+      await fetch(`${API}/api/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, email, whatsapp, url, sector, prospect_id: data.prospect_id })
+      }).catch(() => {})
+    }
+
+    lastResult = data
+    lastUrl    = url
+    showResult(data, url)
+  } catch (err) {
+    clearInterval(interval)
+    loading.style.display = 'none'
+    form.style.display = 'block'
+    showError(err.message || 'Error al analizar el sitio. Intenta de nuevo.')
+  }
+})
+
+function showResult(data, url) {
+  loading.style.display = 'none'
+  result.style.display  = 'block'
+
+  const ps = data.pulsia_score || data.score || 0
+  const bl = data.badge_level  || 'none'
+
+  document.getElementById('res-domain').textContent = new URL(url).hostname
+  document.getElementById('res-score').textContent  = Math.round(ps)
+
+  const circle = document.getElementById('score-circle')
+  const color  = ps >= 75 ? '#00e5a0' : ps >= 50 ? '#fac775' : '#f0997b'
+  circle.style.borderColor = color
+  document.getElementById('res-score').style.color = color
+
+  const badgeEl  = document.getElementById('res-badge')
+  const badgeMap = {
+    platinum: { cls: 'badge-gold',   txt: '✦ Platinum AI Ready' },
+    gold:     { cls: 'badge-gold',   txt: '✦ Gold AI Ready' },
+    silver:   { cls: 'badge-silver', txt: '◈ Silver AI Ready' },
+    bronze:   { cls: 'badge-bronze', txt: '◉ Bronze AI Ready' },
+    none:     { cls: 'badge-none',   txt: '— Sin certificación' }
+  }
+  const bInfo = badgeMap[bl] || badgeMap.none
+  badgeEl.className = `badge-level ${bInfo.cls}`
+  badgeEl.textContent = bInfo.txt
+
+  // Dimensiones
+  const dims     = data.dimensions || {}
+  const dimNames = { semantica: 'Semántica', autoridad: 'Autoridad', tecnica: 'Técnica', conversacional: 'Conversac.', confianza: 'Confianza' }
+  const dimsHtml = Object.entries(dimNames).map(([k, label]) => {
+    const d   = dims[k] || {}
+    const s   = d.score || 0
+    const cls = s >= 7 ? 'good' : s >= 4 ? 'mid' : 'bad'
+    return `<div class="dim">
+      <div class="dim-name">${label}</div>
+      <div class="dim-score ${cls}">${s}</div>
+      <div style="font-size:10px;color:var(--muted)">${d.weight || ''}</div>
+    </div>`
+  }).join('')
+  document.getElementById('res-dims').innerHTML = dimsHtml
+
+  // Prioridades
+  const priorities = data.top_priorities || []
+  const priHtml    = priorities.slice(0, 4).map(p => `
+    <div class="priority-item">
+      <div class="dot ${p.severity || 'medium'}"></div>
+      <span>${p.label}</span>
+    </div>`).join('') || '<div class="priority-item" style="color:var(--muted)">Sin prioridades críticas 🎉</div>'
+  document.getElementById('priorities-list').innerHTML = priHtml
+}
+
+document.getElementById('btn-download').addEventListener('click', async () => {
+  if (!lastUrl) return
+  try {
+    const res  = await fetch(`${API}/api/semantic-layer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: lastUrl, sector: document.getElementById('sector').value })
+    })
+    const data = await res.json()
+    const blob = new Blob([data.txt], { type: 'text/plain;charset=utf-8' })
+    const a    = document.createElement('a')
+    a.href     = URL.createObjectURL(blob)
+    a.download = `pulsia-${data.domain}.txt`
+    a.click()
+  } catch (err) {
+    alert('Error generando el Semantic Layer')
+  }
+})
+
+document.getElementById('btn-retry').addEventListener('click', () => {
+  result.style.display = 'none'
+  form.style.display   = 'block'
+  lastResult = null
+  lastUrl    = null
+})
+
+function showError(msg) {
+  errorMsg.textContent   = msg
+  errorMsg.style.display = 'block'
+}
+</script>
+</body>
+</html>
