@@ -12,6 +12,7 @@ import { notifyJelou }        from './src/outputs/p4-jelou.js'
 import { scoreEntityDensity } from './src/entity-density.js'
 import { calculateRAR }       from './src/rar-calculator.js'
 import { supabase }           from './src/db.js'
+import { scorePulsia }        from './src/pulsia-scorer.js'
 
 const app       = express()
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -22,10 +23,12 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type')
   next()
 })
+
 // ─── Landing page ─────────────────────────────────────────
 app.get('/', (req, res) => {
   res.send(readFileSync(join(__dirname, 'landing.html'), 'utf8'))
 })
+
 // ─── Panel de administración ─────────────────────────────
 app.get('/panel', (req, res) => {
   res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))
@@ -66,6 +69,9 @@ app.post('/api/audit', async (req, res) => {
     const entityDensity    = scoreEntityDensity(extracted.schema_org, sector)
     const rar              = calculateRAR(sector, score)
     const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
+
+    // ─── PulsIA Score multicapa ───────────────────────────
+    const pulsiaResult = scorePulsia({ ...extracted, url }, sector)
 
     await supabase.from('audits').insert({
       prospect_id:   prospect.id,
@@ -124,7 +130,12 @@ app.post('/api/audit', async (req, res) => {
       rar,
       product_assigned: product,
       flags_count:      flags.length,
-      critical_count:   flags.filter(f => f.severity === 'critical').length
+      critical_count:   flags.filter(f => f.severity === 'critical').length,
+      // ─── PulsIA Score ─────────────────────────────────
+      pulsia_score:     pulsiaResult.pulsia_score,
+      badge_level:      pulsiaResult.badge_level,
+      dimensions:       pulsiaResult.dimensions,
+      top_priorities:   pulsiaResult.top_priorities
     })
 
   } catch (err) {
@@ -234,7 +245,9 @@ app.patch('/api/prospects/:id/status', async (req, res) => {
     .select().single()
   if (error) return res.status(500).json({ error: error.message })
   res.json(data)
-})// ─── MercadoPago — crear preferencia de pago ─────────────
+})
+
+// ─── MercadoPago — crear preferencia de pago ─────────────
 app.post('/api/payment/create', async (req, res) => {
   const { product, email = 'cliente@webpulse.co', url = '' } = req.body
 
@@ -304,6 +317,7 @@ a{background:#6c47ff;color:#fff;padding:12px 32px;border-radius:8px;text-decorat
 <a href="https://webpulse-production-7f4c.up.railway.app">← Volver al inicio</a>
 </div></body></html>`)
 })
+
 // ─── Prospección automática por sector ───────────────────
 app.post('/api/prospect/search', async (req, res) => {
   const { sector = 'general', city = 'Colombia', limit = 10 } = req.body
@@ -346,12 +360,13 @@ app.post('/api/prospect/search', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
-})// ─── AI Presence Scan ─────────────────────────────────────
+})
+
+// ─── AI Presence Scan ─────────────────────────────────────
 app.post('/api/ai-scan', async (req, res) => {
   const { domain, brand, sector = 'general', city = 'Colombia', query_limit = 20 } = req.body
   if (!domain) return res.status(400).json({ error: 'domain requerido' })
 
-  // Streaming de progreso via SSE
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
@@ -408,7 +423,7 @@ app.get('/api/ai-scan/:domain', async (req, res) => {
       .order('month', { ascending: false })
       .limit(12)
 
-     res.json({ brand, snapshots: snapshots || [] })
+    res.json({ brand, snapshots: snapshots || [] })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

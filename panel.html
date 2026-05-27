@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Webpulse — Panel de Control</title>
+  <title>PulsIA — Panel de Control</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; }
@@ -16,7 +16,7 @@
     .stat .sub { font-size: 12px; color: #555; margin-top: 4px; }
     .audit-box { margin: 24px 40px 0; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px 24px; }
     .audit-box h2 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #ccc; }
-    .audit-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .audit-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
     .audit-tab { background: none; border: 1px solid #2a2a2a; color: #888; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
     .audit-tab.active { background: #6c47ff; border-color: #6c47ff; color: #fff; }
     .audit-tab.ai-tab.active { background: #0f3d2e; border-color: #1db97a; color: #1db97a; }
@@ -32,6 +32,26 @@
     .audit-result { margin-top: 16px; padding: 14px; background: #0f0f0f; border-radius: 8px; font-size: 13px; display: none; }
     .audit-result.success { border: 1px solid #1a3d2e; color: #69db7c; }
     .audit-result.error { border: 1px solid #3d1a1a; color: #ff6b6b; }
+    /* PulsIA result box */
+    .pulsia-result-box { margin-top: 12px; background: #0d1a2e; border: 1px solid #1a3d6e; border-radius: 10px; padding: 16px; display: none; }
+    .pulsia-result-box .pr-title { font-size: 12px; color: #74c0fc; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-weight: 600; }
+    .pulsia-score-main { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .pulsia-score-circle { width: 64px; height: 64px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+    .pulsia-score-circle .ps-num { font-size: 22px; line-height: 1; }
+    .pulsia-score-circle .ps-label { font-size: 9px; opacity: 0.8; }
+    .badge-none     { background: #2a2a2a; color: #888; }
+    .badge-bronze   { background: #3d2a1a; color: #cd7f32; border: 1px solid #cd7f32; }
+    .badge-silver   { background: #1a2a2a; color: #c0c0c0; border: 1px solid #c0c0c0; }
+    .badge-gold     { background: #2a2a0a; color: #ffd700; border: 1px solid #ffd700; }
+    .badge-platinum { background: #1a0a2a; color: #e5e4e2; border: 1px solid #b4b4ff; }
+    .pulsia-dims { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .pulsia-dim { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 6px; padding: 8px 6px; text-align: center; }
+    .pulsia-dim .pd-label { font-size: 9px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+    .pulsia-dim .pd-score { font-size: 16px; font-weight: 700; }
+    .pulsia-dim .pd-weight { font-size: 9px; color: #555; margin-top: 2px; }
+    .pd-score.good { color: #69db7c; }
+    .pd-score.mid  { color: #ffa94d; }
+    .pd-score.bad  { color: #ff6b6b; }
     .batch-form { display: flex; flex-direction: column; gap: 12px; }
     .batch-form textarea { background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 12px 14px; border-radius: 8px; font-size: 13px; font-family: monospace; resize: vertical; min-height: 100px; }
     .batch-form textarea:focus { outline: none; border-color: #6c47ff; }
@@ -69,8 +89,8 @@
     tr.clickable:hover td { background: #1a1a1a; }
     tr.selected td { background: #1a1a2e !important; border-left: 3px solid #6c47ff; }
     .detail-panel { width: 0; overflow: hidden; transition: width 0.3s ease; background: #1a1a1a; border-left: 1px solid #2a2a2a; flex-shrink: 0; }
-    .detail-panel.open { width: 400px; }
-    .detail-inner { width: 400px; padding: 24px; height: 100vh; overflow-y: auto; position: sticky; top: 0; }
+    .detail-panel.open { width: 420px; }
+    .detail-inner { width: 420px; padding: 24px; height: 100vh; overflow-y: auto; position: sticky; top: 0; }
     .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
     .detail-domain { font-size: 16px; font-weight: 700; color: #fff; word-break: break-all; }
     .detail-url { font-size: 11px; color: #555; margin-top: 4px; }
@@ -80,6 +100,16 @@
     .detail-score-card { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; text-align: center; }
     .detail-score-card .ds-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 6px; }
     .detail-score-card .ds-value { font-size: 22px; font-weight: 700; }
+    /* PulsIA dimensions in detail panel */
+    .pulsia-panel { background: #0d1a2e; border: 1px solid #1a3d6e; border-radius: 10px; padding: 14px; margin-bottom: 20px; }
+    .pulsia-panel-title { font-size: 10px; color: #74c0fc; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .pulsia-badge-tag { padding: 2px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .pulsia-dim-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1a2a3a; font-size: 12px; }
+    .pulsia-dim-row:last-child { border-bottom: none; }
+    .pulsia-dim-name { color: #888; }
+    .pulsia-dim-bar-wrap { flex: 1; margin: 0 10px; background: #1a1a1a; border-radius: 4px; height: 4px; overflow: hidden; }
+    .pulsia-dim-bar { height: 4px; border-radius: 4px; transition: width 0.5s; }
+    .pulsia-dim-val { font-weight: 700; font-size: 13px; min-width: 24px; text-align: right; }
     .detail-section { margin-bottom: 20px; }
     .detail-section h3 { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1px solid #2a2a2a; padding-bottom: 6px; }
     .flag-item { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #1e1e1e; }
@@ -128,8 +158,7 @@
     .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #555; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .no-flags { color: #555; font-size: 13px; padding: 10px 0; }
-
-    /* ── AI Presence styles ── */
+    /* AI Presence */
     .ai-form { display: flex; flex-direction: column; gap: 14px; }
     .ai-form-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .ai-form-row input { flex: 1; min-width: 200px; background: #0f0f0f; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
@@ -155,13 +184,7 @@
     .ai-metric .am-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
     .ai-metric .am-value { font-size: 22px; font-weight: 700; color: #1db97a; }
     .ai-metric .am-sub { font-size: 11px; color: #555; margin-top: 2px; }
-    .list.innerHTML = queries.map(q => `
-  <div class="ai-query-item">
-    <span class="ai-query-text">${q.query_text || q.query}</span>
-    ${(q.appears || q.found)
-      ? `<span class="ai-query-found">✅ encontrado</span>`
-      : `<span class="ai-query-notfound">— no encontrado</span>`}
-  </div>`).join('')
+    .ai-queries-list { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; }
     .ai-query-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e1e1e; font-size: 12px; }
     .ai-query-item:last-child { border-bottom: none; }
     .ai-query-text { color: #ccc; flex: 1; }
@@ -175,7 +198,7 @@
 </head>
 <body>
 <header>
-  <h1>⚡ Webpulse</h1>
+  <h1>⚡ PulsIA</h1>
   <div style="display:flex;gap:10px;align-items:center">
     <span id="last-update" style="font-size:13px;color:#888">Cargando...</span>
     <button class="export-btn" onclick="exportCSV()">⬇ Exportar CSV</button>
@@ -213,6 +236,21 @@
       <button id="audit-btn" onclick="runAudit()">⚡ Auditar ahora</button>
     </div>
     <div class="audit-result" id="audit-result"></div>
+    <!-- PulsIA Score result -->
+    <div class="pulsia-result-box" id="pulsia-result-box">
+      <div class="pr-title">🎯 PulsIA Score — Diagnóstico multicapa</div>
+      <div class="pulsia-score-main">
+        <div class="pulsia-score-circle" id="pr-circle">
+          <span class="ps-num" id="pr-num">—</span>
+          <span class="ps-label">/ 100</span>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;color:#ccc;margin-bottom:6px">Badge: <strong id="pr-badge">—</strong></div>
+          <div class="pulsia-dims" id="pr-dims"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#666;margin-top:8px">Top prioridades: <span id="pr-priorities" style="color:#ffa94d"></span></div>
+    </div>
   </div>
 
   <!-- TAB BATCH -->
@@ -279,17 +317,17 @@
       <div class="ai-form-row">
         <input type="text" id="ai-domain" placeholder="dominio.com (sin https://)" />
         <input type="text" id="ai-brand" placeholder="Nombre de la marca" />
-        <<select id="ai-sector">
-  <option value="general">General</option>
-  <option value="real_estate">Inmobiliaria</option>
-  <option value="health">Salud / Clínica</option>
-  <option value="restaurant">Restaurante</option>
-  <option value="hotel">Hotel</option>
-  <option value="media">Medios / Noticias</option>
-  <option value="ecommerce">E-commerce</option>
-  <option value="education">Educación</option>
-  <option value="legal">Legal / Abogados</option>
-</select>
+        <select id="ai-sector">
+          <option value="general">General</option>
+          <option value="real_estate">Inmobiliaria</option>
+          <option value="health">Salud / Clínica</option>
+          <option value="restaurant">Restaurante</option>
+          <option value="hotel">Hotel</option>
+          <option value="media">Medios / Noticias</option>
+          <option value="ecommerce">E-commerce</option>
+          <option value="education">Educación</option>
+          <option value="legal">Legal / Abogados</option>
+        </select>
         <input type="text" id="ai-city" placeholder="Ciudad" value="Colombia" style="max-width:140px" />
         <select id="ai-qlimit" style="max-width:110px">
           <option value="5">5 queries</option>
@@ -298,13 +336,11 @@
         </select>
         <button class="ai-scan-btn" id="ai-btn" onclick="runAIScan()">🧠 Escanear</button>
       </div>
-
       <div class="ai-progress" id="ai-progress">
         <div class="ai-progress-label" id="ai-progress-label">Iniciando scan...</div>
         <div class="ai-progress-bar-wrap"><div class="ai-progress-bar" id="ai-bar"></div></div>
         <div class="ai-log" id="ai-log"></div>
       </div>
-
       <div class="ai-result" id="ai-result">
         <div class="ai-result-header">
           <div>
@@ -345,10 +381,10 @@
   <div class="table-wrap" id="table-wrap">
     <table>
       <thead>
-        <tr><th>Sitio</th><th>Sector</th><th>Score</th><th>RAR mensual</th><th>Producto</th><th>Estado</th><th>Fecha</th></tr>
+        <tr><th>Sitio</th><th>Sector</th><th>Score SEO</th><th>PulsIA</th><th>RAR mensual</th><th>Producto</th><th>Estado</th><th>Fecha</th></tr>
       </thead>
       <tbody id="prospects-table">
-        <tr><td colspan="7" class="empty">Cargando prospectos...</td></tr>
+        <tr><td colspan="8" class="empty">Cargando prospectos...</td></tr>
       </tbody>
     </table>
   </div>
@@ -365,10 +401,19 @@
 
   function scoreClass(s) { return s>=7?'score-critical':s>=4?'score-medium':'score-ok' }
   function scoreColor(s)  { return s>=7?'#ff6b6b':s>=4?'#ffa94d':'#69db7c' }
+  function pulsiaColor(s) { return s>=75?'#69db7c':s>=50?'#ffa94d':'#ff6b6b' }
+  function dimColor(s)    { return s>=7?'good':s>=4?'mid':'bad' }
   function rarEstimate(sector,score) { return Math.round((RAR_BY_SECTOR[sector]||1575)*(score/10)) }
   function formatDate(iso) {
     if(!iso) return '—'
     return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})
+  }
+  function badgeEmoji(b) {
+    const m = {platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉',none:'—'}
+    return m[b]||'—'
+  }
+  function badgeClass(b) {
+    return 'badge-'+(b||'none')
   }
 
   function switchTab(tab, e) {
@@ -378,200 +423,155 @@
     e.target.classList.add('active')
   }
 
-  // ── AI PRESENCE SCAN ──────────────────────────────────────
+  // ── PulsIA Score display ──────────────────────────────
+  function renderPulsiaBox(data) {
+    const box = document.getElementById('pulsia-result-box')
+    if (!data.pulsia_score) { box.style.display='none'; return }
+    box.style.display = 'block'
+    const ps = data.pulsia_score
+    const bl = data.badge_level || 'none'
+    const circle = document.getElementById('pr-circle')
+    circle.className = 'pulsia-score-circle ' + badgeClass(bl)
+    document.getElementById('pr-num').textContent = ps
+    document.getElementById('pr-badge').textContent = badgeEmoji(bl) + ' ' + (bl.charAt(0).toUpperCase()+bl.slice(1))
+    const dims = data.dimensions || {}
+    const dimNames = {semantica:'Semántica',autoridad:'Autoridad',tecnica:'Técnica',conversacional:'Conversac.',confianza:'Confianza'}
+    const dimsHtml = Object.entries(dimNames).map(([k,label])=>{
+      const d = dims[k] || {}
+      const s = d.score || 0
+      const cls = dimColor(s)
+      return `<div class="pulsia-dim">
+        <div class="pd-label">${label}</div>
+        <div class="pd-score ${cls}">${s}</div>
+        <div class="pd-weight">${d.weight||''}</div>
+      </div>`
+    }).join('')
+    document.getElementById('pr-dims').innerHTML = dimsHtml
+    const priorities = (data.top_priorities||[]).map(p=>p.label).slice(0,2).join(' · ')
+    document.getElementById('pr-priorities').textContent = priorities || 'Sin prioridades críticas'
+  }
+
+  function pulsiaDetailHtml(p) {
+    if (!p.pulsia_score && p.pulsia_score !== 0) return ''
+    const ps = p.pulsia_score || 0
+    const bl = p.badge_level || 'none'
+    const dims = p.dimensions || {}
+    const dimNames = {semantica:'Semántica',autoridad:'Autoridad',tecnica:'Técnica',conversacional:'Conversacional',confianza:'Confianza'}
+    const dimsHtml = Object.entries(dimNames).map(([k,label])=>{
+      const d = dims[k] || {}
+      const s = d.score || 0
+      const color = s>=7?'#69db7c':s>=4?'#ffa94d':'#ff6b6b'
+      return `<div class="pulsia-dim-row">
+        <span class="pulsia-dim-name">${label}</span>
+        <div class="pulsia-dim-bar-wrap"><div class="pulsia-dim-bar" style="width:${s*10}%;background:${color}"></div></div>
+        <span class="pulsia-dim-val" style="color:${color}">${s}</span>
+      </div>`
+    }).join('')
+    return `<div class="pulsia-panel">
+      <div class="pulsia-panel-title">
+        🎯 PulsIA Score
+        <span class="pulsia-badge-tag ${badgeClass(bl)}">${badgeEmoji(bl)} ${bl.charAt(0).toUpperCase()+bl.slice(1)} — ${ps}/100</span>
+      </div>
+      ${dimsHtml}
+    </div>`
+  }
+
+  // ── AI PRESENCE SCAN ──────────────────────────────────
   async function runAIScan() {
-    const domain   = document.getElementById('ai-domain').value.trim().replace(/^https?:\/\//,'')
-    const brand    = document.getElementById('ai-brand').value.trim()
-    const sector   = document.getElementById('ai-sector').value
-    const city     = document.getElementById('ai-city').value.trim() || 'Colombia'
-    const qlimit   = parseInt(document.getElementById('ai-qlimit').value)
-    const btn      = document.getElementById('ai-btn')
-    const progress = document.getElementById('ai-progress')
-    const result   = document.getElementById('ai-result')
-    const log      = document.getElementById('ai-log')
-    const bar      = document.getElementById('ai-bar')
-    const label    = document.getElementById('ai-progress-label')
-
+    const domain=document.getElementById('ai-domain').value.trim().replace(/^https?:\/\//,'')
+    const brand=document.getElementById('ai-brand').value.trim()
+    const sector=document.getElementById('ai-sector').value
+    const city=document.getElementById('ai-city').value.trim()||'Colombia'
+    const qlimit=parseInt(document.getElementById('ai-qlimit').value)
+    const btn=document.getElementById('ai-btn')
+    const progress=document.getElementById('ai-progress')
+    const result=document.getElementById('ai-result')
+    const log=document.getElementById('ai-log')
+    const bar=document.getElementById('ai-bar')
+    const label=document.getElementById('ai-progress-label')
     if(!domain){alert('Ingresa el dominio');return}
-
-    btn.disabled = true
-    btn.innerHTML = '<span class="spinner"></span> Escaneando...'
-    progress.style.display = 'block'
-    result.style.display   = 'none'
-    log.innerHTML = ''
-    bar.style.width = '0%'
-    label.textContent = 'Conectando...'
-
-    function addLog(text, cls) {
-      const d = document.createElement('div')
-      d.className = cls || 'al-run'
-      d.textContent = text
-      log.appendChild(d)
-      log.scrollTop = log.scrollHeight
-    }
-
-    try {
-      const res = await fetch(API+'/api/ai-scan', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({domain, brand: brand||domain.split('.')[0], sector, city, query_limit: qlimit})
-      })
-
-      const reader = res.body.getReader()
-      const dec    = new TextDecoder()
-      let   buf    = ''
-
-      while(true) {
-        const {done, value} = await reader.read()
-        if(done) break
-        buf += dec.decode(value, {stream:true})
-        const lines = buf.split('\n')
-        buf = lines.pop()
-
-        for(const line of lines) {
-          if(!line.startsWith('data: ')) continue
-          try {
-            const obj = JSON.parse(line.slice(6))
-            if(obj.type === 'start') {
-              addLog('🚀 ' + obj.message, 'al-run')
-            } else if(obj.type === 'progress') {
-              const pct = obj.pct || Math.round((obj.processed/obj.total)*100)
-              bar.style.width = pct + '%'
-              label.textContent = `Procesando query ${obj.processed}/${obj.total}: "${obj.current}"`
-              const found = obj.found > 0
-              addLog((found ? '✅ ' : '— ') + obj.current + (found ? ` → encontrado (${obj.found})` : ''), found ? 'al-ok' : 'al-run')
-            } else if(obj.type === 'complete') {
-              bar.style.width = '100%'
-              label.textContent = 'Scan completado'
-              renderAIResult(obj.result, domain)
-            } else if(obj.type === 'error') {
-              addLog('❌ ' + obj.message, 'al-err')
-              label.textContent = 'Error en el scan'
-            }
-          } catch(e) {}
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Escaneando...'
+    progress.style.display='block';result.style.display='none';log.innerHTML='';bar.style.width='0%';label.textContent='Conectando...'
+    function addLog(text,cls){const d=document.createElement('div');d.className=cls||'al-run';d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight}
+    try{
+      const res=await fetch(API+'/api/ai-scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain,brand:brand||domain.split('.')[0],sector,city,query_limit:qlimit})})
+      const reader=res.body.getReader();const dec=new TextDecoder();let buf=''
+      while(true){
+        const{done,value}=await reader.read();if(done)break
+        buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()
+        for(const line of lines){
+          if(!line.startsWith('data: '))continue
+          try{
+            const obj=JSON.parse(line.slice(6))
+            if(obj.type==='start'){addLog('🚀 '+obj.message,'al-run')}
+            else if(obj.type==='progress'){const pct=obj.pct||Math.round((obj.processed/obj.total)*100);bar.style.width=pct+'%';label.textContent=`Query ${obj.processed}/${obj.total}: "${obj.current}"`;addLog((obj.found>0?'✅ ':'— ')+obj.current+(obj.found>0?` → encontrado`:''),(obj.found>0?'al-ok':'al-run'))}
+            else if(obj.type==='complete'){bar.style.width='100%';label.textContent='Scan completado';renderAIResult(obj.result,domain)}
+            else if(obj.type==='error'){addLog('❌ '+obj.message,'al-err');label.textContent='Error en el scan'}
+          }catch(e){}
         }
       }
-    } catch(err) {
-      addLog('❌ Error de conexión: ' + err.message, 'al-err')
-      label.textContent = 'Error de conexión'
-    } finally {
-      btn.disabled = false
-      btn.textContent = '🧠 Escanear'
-    }
+    }catch(err){addLog('❌ Error: '+err.message,'al-err');label.textContent='Error de conexión'}
+    finally{btn.disabled=false;btn.textContent='🧠 Escanear'}
   }
 
-  function renderAIResult(r, domain) {
-    const levelMap = {
-      'Invisible': 'level-invisible',
-      'Emerging':  'level-emerging',
-      'Present':   'level-present',
-      'Dominant':  'level-dominant'
-    }
-    document.getElementById('ai-res-domain').textContent    = domain
-    document.getElementById('ai-res-date').textContent      = 'Escaneado: ' + new Date().toLocaleString('es-CO')
-    document.getElementById('ai-res-asa').textContent       = (r.asa||0) + '%'
-    document.getElementById('ai-res-aar').textContent       = (r.aar||0) + '%'
-    document.getElementById('ai-res-appearances').textContent = r.appearances || 0
-    document.getElementById('ai-res-total').textContent     = 'de ' + (r.total_queries||0) + ' queries'
-
-    const levelEl = document.getElementById('ai-res-level')
-    levelEl.textContent  = r.level || 'Invisible'
-    levelEl.className    = 'ai-level-badge ' + (levelMap[r.level] || 'level-invisible')
-
-    const list = document.getElementById('ai-queries-list')
-    const queries = r.query_results || []
-    if(queries.length) {
-      list.innerHTML = queries.map(q => `
-        <div class="ai-query-item">
-          <span class="ai-query-text">${q.query}</span>
-          ${q.found
-            ? `<span class="ai-query-found">✅ encontrado</span>`
-            : `<span class="ai-query-notfound">— no encontrado</span>`}
-        </div>`).join('')
-    } else {
-      list.innerHTML = '<div style="color:#555;font-size:12px;padding:8px 0">Sin queries registradas</div>'
-    }
-
-    document.getElementById('ai-result').style.display = 'block'
+  function renderAIResult(r,domain){
+    const levelMap={Invisible:'level-invisible',Emerging:'level-emerging',Present:'level-present',Dominant:'level-dominant'}
+    document.getElementById('ai-res-domain').textContent=domain
+    document.getElementById('ai-res-date').textContent='Escaneado: '+new Date().toLocaleString('es-CO')
+    document.getElementById('ai-res-asa').textContent=(r.asa||0)+'%'
+    document.getElementById('ai-res-aar').textContent=(r.aar||0)+'%'
+    document.getElementById('ai-res-appearances').textContent=r.appearances||0
+    document.getElementById('ai-res-total').textContent='de '+(r.total_queries||0)+' queries'
+    const levelEl=document.getElementById('ai-res-level')
+    levelEl.textContent=r.level||'Invisible';levelEl.className='ai-level-badge '+(levelMap[r.level]||'level-invisible')
+    const list=document.getElementById('ai-queries-list')
+    const queries=r.query_results||[]
+    list.innerHTML=queries.length?queries.map(q=>`<div class="ai-query-item"><span class="ai-query-text">${q.query_text||q.query}</span>${(q.appears||q.found)?'<span class="ai-query-found">✅ encontrado</span>':'<span class="ai-query-notfound">— no encontrado</span>'}</div>`).join(''):'<div style="color:#555;font-size:12px;padding:8px 0">Sin queries registradas</div>'
+    document.getElementById('ai-result').style.display='block'
   }
 
-  // ── RESTO DEL PANEL (sin cambios) ─────────────────────────
-
+  // ── EXPORTAR CSV ──────────────────────────────────────
   function exportCSV() {
     if(!currentData.length){alert('No hay datos para exportar');return}
-    const headers=['Dominio','URL','Sector','Score','RAR_mensual_USD','Producto','Estado','Fecha']
+    const headers=['Dominio','URL','Sector','Score','PulsIA_Score','Badge','RAR_mensual_USD','Producto','Estado','Fecha']
     const rows=currentData.map(p=>{
       const rar=rarEstimate(p.sector,p.score||0)
-      return [p.domain||p.url,p.url,p.sector||'general',p.score||0,rar,
-              p.product_assigned||'—',p.status||'pending',formatDate(p.created_at)]
+      return [p.domain||p.url,p.url,p.sector||'general',p.score||0,p.pulsia_score||'—',p.badge_level||'—',rar,p.product_assigned||'—',p.status||'pending',formatDate(p.created_at)]
         .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')
     })
     const csv=[headers.join(','),...rows].join('\n')
     const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})
-    const url=URL.createObjectURL(blob)
-    const a=document.createElement('a')
-    a.href=url
-    a.download=`webpulse_prospects_${new Date().toISOString().slice(0,10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    const url=URL.createObjectURL(blob);const a=document.createElement('a')
+    a.href=url;a.download=`pulsia_prospects_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url)
   }
 
+  // ── PROSPECCIÓN ───────────────────────────────────────
   async function runProspection() {
-    const sector=document.getElementById('prospect-sector').value
-    const city=document.getElementById('prospect-city').value.trim()||'Colombia'
-    const limit=parseInt(document.getElementById('prospect-limit').value)
-    const btn=document.getElementById('prospect-btn')
-    const progress=document.getElementById('prospect-progress')
-    const log=document.getElementById('prospect-log')
-    const bar=document.getElementById('prospect-bar')
-    const counter=document.getElementById('prospect-counter')
-    const status=document.getElementById('prospect-status')
-    btn.disabled=true
-    btn.innerHTML='<span class="spinner"></span> Buscando...'
-    progress.style.display='block'
-    log.innerHTML=''
-    bar.style.width='0%'
-    try {
+    const sector=document.getElementById('prospect-sector').value;const city=document.getElementById('prospect-city').value.trim()||'Colombia';const limit=parseInt(document.getElementById('prospect-limit').value)
+    const btn=document.getElementById('prospect-btn');const progress=document.getElementById('prospect-progress');const log=document.getElementById('prospect-log');const bar=document.getElementById('prospect-bar');const counter=document.getElementById('prospect-counter');const status=document.getElementById('prospect-status')
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Buscando...';progress.style.display='block';log.innerHTML='';bar.style.width='0%'
+    try{
       status.textContent=`Buscando sitios de ${sector} en ${city}...`
       const searchRes=await fetch(API+'/api/prospect/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sector,city,limit})})
       const searchData=await searchRes.json()
-      if(searchData.error){const errLine=document.createElement('div');errLine.className='log-err';errLine.textContent='❌ '+(searchData.message||searchData.error);log.appendChild(errLine);return}
+      if(searchData.error){const e=document.createElement('div');e.className='log-err';e.textContent='❌ '+(searchData.message||searchData.error);log.appendChild(e);return}
       const urls=searchData.urls||[]
-      if(!urls.length){const errLine=document.createElement('div');errLine.className='log-err';errLine.textContent='❌ No se encontraron sitios.';log.appendChild(errLine);return}
-      const infoLine=document.createElement('div');infoLine.className='log-info';infoLine.textContent=`✓ Encontrados ${urls.length} sitios. Auditando...`;log.appendChild(infoLine)
+      if(!urls.length){const e=document.createElement('div');e.className='log-err';e.textContent='❌ No se encontraron sitios.';log.appendChild(e);return}
+      const infoLine=document.createElement('div');infoLine.className='log-info';infoLine.textContent=`✓ ${urls.length} sitios encontrados. Auditando...`;log.appendChild(infoLine)
       let done=0
       for(const url of urls){
         counter.textContent=`${done}/${urls.length}`;status.textContent=`Auditando ${new URL(url).hostname}...`;bar.style.width=`${Math.round((done/urls.length)*100)}%`
         const logLine=document.createElement('div');logLine.className='log-info';logLine.textContent=`⏳ ${url}`;log.appendChild(logLine);log.scrollTop=log.scrollHeight
-        try{const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})});const data=await res.json();if(data.error)throw new Error(data.error);const s=data.score??'?';const p=data.product_assigned??'?';const r=data.score?rarEstimate(sector,data.score):0;logLine.className='log-ok';logLine.textContent=`✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes`}
+        try{const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})});const data=await res.json();if(data.error)throw new Error(data.error);const s=data.score??'?';const p=data.product_assigned??'?';const r=data.score?rarEstimate(sector,data.score):0;const ps=data.pulsia_score?` | PulsIA: ${data.pulsia_score}`:'';logLine.className='log-ok';logLine.textContent=`✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes${ps}`}
         catch(err){logLine.className='log-err';logLine.textContent=`❌ ${url} — ${err.message}`}
-        done++;log.scrollTop=log.scrollHeight
-        if(done<urls.length)await new Promise(r=>setTimeout(r,1500))
+        done++;log.scrollTop=log.scrollHeight;if(done<urls.length)await new Promise(r=>setTimeout(r,1500))
       }
       bar.style.width='100%';counter.textContent=`${done}/${urls.length}`;status.textContent=`Completado — ${done} sitios procesados`;loadProspects()
-    }catch(err){const errLine=document.createElement('div');errLine.className='log-err';errLine.textContent='❌ Error: '+err.message;log.appendChild(errLine)}
+    }catch(err){const e=document.createElement('div');e.className='log-err';e.textContent='❌ Error: '+err.message;log.appendChild(e)}
     finally{btn.disabled=false;btn.innerHTML='🤖 Buscar y auditar'}
   }
 
-  async function viewReport(id) {
-    const box=document.getElementById('report-box-'+id)
-    if(!box)return
-    if(box.style.display==='block'){box.style.display='none';return}
-    box.style.display='block'
-    box.innerHTML='<div style="color:#888;font-size:13px;padding:10px 0">Cargando reporte...</div>'
-    try{const res=await fetch(API+'/api/prospects/'+id+'/report');const data=await res.json();if(data.error)throw new Error(data.error);const r=data.payload
-      box.innerHTML=`<div class="report-box"><div style="color:#ffd43b;font-weight:700;margin-bottom:8px">📊 ${r.diagnosis?.verdict||'Reporte'} — Score ${r.diagnosis?.score}</div><div style="color:#888;margin-bottom:12px;font-size:12px">${r.diagnosis?.summary||''}</div><div class="report-section-title" style="color:#ff6b6b">🔴 Críticos (${r.technical_issues?.critical?.length||0})</div>${(r.technical_issues?.critical||[]).map(f=>`<div class="report-item">• ${f.problema}</div>`).join('')}<div class="report-section-title" style="color:#ffa94d;margin-top:8px">🟡 Medios (${r.technical_issues?.medium?.length||0})</div>${(r.technical_issues?.medium||[]).map(f=>`<div class="report-item">• ${f.problema}</div>`).join('')}<div class="report-section-title" style="color:#69db7c;margin-top:8px">💰 Revenue en riesgo</div><div style="color:#ccc;font-size:12px">${r.revenue_at_risk?.headline||'Sin datos'}</div><div class="report-section-title" style="color:#74c0fc;margin-top:8px">✅ Solución</div><div style="color:#ccc;font-size:12px">${r.solution?.recommended_product||''}</div><div style="color:#888;font-size:11px;margin-top:4px">${r.solution?.next_step||''}</div><button class="copy-btn" onclick="copyReport('${id}')">📋 Copiar reporte para WhatsApp</button></div>`
-    }catch(err){box.innerHTML='<div style="color:#ff6b6b;font-size:12px;padding:8px 0">❌ '+err.message+'</div>'}
-  }
-
-  async function copyReport(id) {
-    const p=currentData.find(x=>x.id===id);if(!p)return
-    try{const res=await fetch(API+'/api/prospects/'+id+'/report');const data=await res.json();const r=data.payload
-      const text=`🔍 *Análisis Webpulse — ${p.domain}*\nScore IA: *${r.diagnosis?.score}/10* (${r.diagnosis?.verdict})\n${r.diagnosis?.summary}\n\n🔴 *Problemas críticos:*\n${(r.technical_issues?.critical||[]).map(f=>'• '+f.problema).join('\n')}\n\n💰 *Revenue en riesgo:*\n${r.revenue_at_risk?.headline||''}\n\n✅ *Solución recomendada:*\n${r.solution?.recommended_product||''}\n\n${r.solution?.next_step||''}`
-      await navigator.clipboard.writeText(text);alert('✅ Reporte copiado — listo para pegar en WhatsApp')
-    }catch(err){alert('Error: '+err.message)}
-  }
-
+  // ── BATCH ─────────────────────────────────────────────
   async function runBatch() {
     const raw=document.getElementById('batch-urls').value.trim();const sector=document.getElementById('batch-sector').value
     if(!raw){alert('Pega al menos una URL');return}
@@ -583,33 +583,74 @@
     for(const url of urls){
       counter.textContent=`${done}/${urls.length}`;status.textContent=`Auditando ${new URL(url).hostname}...`;bar.style.width=`${Math.round((done/urls.length)*100)}%`
       const logLine=document.createElement('div');logLine.className='log-info';logLine.textContent=`⏳ ${url}`;log.appendChild(logLine);log.scrollTop=log.scrollHeight
-      try{const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})});const data=await res.json();if(data.error)throw new Error(data.error);const s=data.score??'?';const p=data.product_assigned??'?';const r=data.score?rarEstimate(sector,data.score):0;logLine.className='log-ok';logLine.textContent=`✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes`}
+      try{const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})});const data=await res.json();if(data.error)throw new Error(data.error);const s=data.score??'?';const p=data.product_assigned??'?';const r=data.score?rarEstimate(sector,data.score):0;const ps=data.pulsia_score?` | PulsIA: ${data.pulsia_score}`:''
+      logLine.className='log-ok';logLine.textContent=`✅ ${new URL(url).hostname} — Score: ${s} | ${p} | $${r.toLocaleString()}/mes${ps}`}
       catch(err){logLine.className='log-err';logLine.textContent=`❌ ${url} — ${err.message}`}
-      done++;log.scrollTop=log.scrollHeight
-      if(done<urls.length)await new Promise(r=>setTimeout(r,1500))
+      done++;log.scrollTop=log.scrollHeight;if(done<urls.length)await new Promise(r=>setTimeout(r,1500))
     }
     bar.style.width='100%';counter.textContent=`${done}/${urls.length}`;status.textContent=`Completado — ${done} sitios procesados`
     btn.disabled=false;btn.innerHTML='⚡ Auditar todo';loadProspects()
   }
 
+  // ── AUDIT INDIVIDUAL ──────────────────────────────────
   async function runAudit() {
     const url=document.getElementById('audit-url').value.trim();const sector=document.getElementById('audit-sector').value;const btn=document.getElementById('audit-btn');const result=document.getElementById('audit-result')
     if(!url){alert('Ingresa una URL');return}
     btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Auditando...';result.style.display='none'
-    try{const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})});const data=await res.json();if(data.error)throw new Error(data.error);const rar=rarEstimate(sector,data.score)
+    document.getElementById('pulsia-result-box').style.display='none'
+    try{
+      const res=await fetch(API+'/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,sector})})
+      const data=await res.json();if(data.error)throw new Error(data.error)
+      const rar=rarEstimate(sector,data.score)
       result.className='audit-result success';result.style.display='block'
-      result.innerHTML=`✅ <strong>${new URL(url).hostname}</strong> auditado — Score: <strong>${data.score}</strong> | Producto: <strong>${data.product_assigned}</strong> | RAR: <strong>$${rar.toLocaleString()}/mes</strong> | Críticos: <strong>${data.critical_count}</strong>`
+      result.innerHTML=`✅ <strong>${new URL(url).hostname}</strong> — Score SEO: <strong>${data.score}</strong> | Producto: <strong>${data.product_assigned}</strong> | RAR: <strong>$${rar.toLocaleString()}/mes</strong> | Críticos: <strong>${data.critical_count}</strong>`
+      renderPulsiaBox(data)
       loadProspects()
     }catch(err){result.className='audit-result error';result.style.display='block';result.innerHTML='❌ Error: '+err.message}
     finally{btn.disabled=false;btn.innerHTML='⚡ Auditar ahora'}
   }
 
+  // ── DETAIL PANEL ──────────────────────────────────────
   function openDetail(p) {
     if(!p)return;selectedId=p.id
     const rar=rarEstimate(p.sector,p.score||0);const flags=Array.isArray(p.latest_flags)?p.latest_flags:[]
     const flagsHtml=flags.length?flags.sort((a,b)=>{const o={critical:0,warning:1,info:2};return(o[a.severity]||3)-(o[b.severity]||3)}).map(f=>`<div class="flag-item"><div class="flag-dot ${f.severity||'info'}"></div><div><div class="flag-text">${f.label||f.message||f.flag||'Sin descripción'}</div><div class="flag-severity ${f.severity||'info'}">${f.severity||'info'}</div></div></div>`).join(''):'<div class="no-flags">Sin flags registrados</div>'
     const pc=`product-${(p.product_assigned||'p1').toLowerCase()}`
-    document.getElementById('detail-inner').innerHTML=`<div class="detail-header"><div><div class="detail-domain">${p.domain||p.url}</div><div class="detail-url"><a href="${p.url}" target="_blank" style="color:#555;text-decoration:none">${p.url}</a></div></div><button class="close-btn" onclick="closeDetail()">✕</button></div><div class="detail-scores"><div class="detail-score-card"><div class="ds-label">Score total</div><div class="ds-value" style="color:${scoreColor(p.score||0)}">${p.score||'—'}</div></div><div class="detail-score-card"><div class="ds-label">RAR mensual</div><div class="ds-value" style="color:#69db7c;font-size:16px">$${rar.toLocaleString()}</div></div><div class="detail-score-card"><div class="ds-label">Producto</div><div class="ds-value ${pc}" style="font-size:18px">${p.product_assigned||'—'}</div></div><div class="detail-score-card"><div class="ds-label">Auditorías</div><div class="ds-value" style="font-size:18px">${p.audit_count||1}</div></div></div><div class="detail-section"><h3>Información</h3><div class="detail-meta"><div class="meta-row"><span class="meta-label">Sector</span><span class="meta-value">${p.sector||'general'}</span></div><div class="meta-row"><span class="meta-label">Estado</span><span class="meta-value"><span class="status-badge status-${p.status||'pending'}">${p.status||'pending'}</span></span></div><div class="meta-row"><span class="meta-label">Fecha</span><span class="meta-value">${formatDate(p.created_at)}</span></div></div></div><div class="detail-section"><h3>Cambiar estado</h3><select class="status-select" onchange="updateStatus('${p.id}',this.value)"><option value="pending" ${p.status==='pending'?'selected':''}>Pendiente</option><option value="audited" ${p.status==='audited'?'selected':''}>Auditado</option><option value="contacted" ${p.status==='contacted'?'selected':''}>Contactado</option><option value="delivered" ${p.status==='delivered'?'selected':''}>Entregado</option></select></div><div class="detail-section"><h3>Problemas detectados (${flags.length})</h3>${flagsHtml}</div><div class="detail-section"><h3>Acciones</h3><button class="copy-btn" id="copy-btn-${p.id}" onclick="copyProspectInfo('${p.id}')">📋 Copiar resumen para contacto</button><button class="copy-btn" onclick="viewReport('${p.id}')">📄 Ver reporte completo</button><button class="copy-btn" onclick="window.open('${p.url}','_blank')">🌐 Abrir sitio web</button></div><div id="report-box-${p.id}" style="display:none"></div>`
+    const pulsiaHtml = pulsiaDetailHtml(p)
+    document.getElementById('detail-inner').innerHTML=`
+      <div class="detail-header">
+        <div><div class="detail-domain">${p.domain||p.url}</div><div class="detail-url"><a href="${p.url}" target="_blank" style="color:#555;text-decoration:none">${p.url}</a></div></div>
+        <button class="close-btn" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="detail-scores">
+        <div class="detail-score-card"><div class="ds-label">Score SEO</div><div class="ds-value" style="color:${scoreColor(p.score||0)}">${p.score||'—'}</div></div>
+        <div class="detail-score-card"><div class="ds-label">RAR mensual</div><div class="ds-value" style="color:#69db7c;font-size:16px">$${rar.toLocaleString()}</div></div>
+        <div class="detail-score-card"><div class="ds-label">Producto</div><div class="ds-value ${pc}" style="font-size:18px">${p.product_assigned||'—'}</div></div>
+        <div class="detail-score-card"><div class="ds-label">Auditorías</div><div class="ds-value" style="font-size:18px">${p.audit_count||1}</div></div>
+      </div>
+      ${pulsiaHtml}
+      <div class="detail-section"><h3>Información</h3>
+        <div class="detail-meta">
+          <div class="meta-row"><span class="meta-label">Sector</span><span class="meta-value">${p.sector||'general'}</span></div>
+          <div class="meta-row"><span class="meta-label">Estado</span><span class="meta-value"><span class="status-badge status-${p.status||'pending'}">${p.status||'pending'}</span></span></div>
+          <div class="meta-row"><span class="meta-label">Fecha</span><span class="meta-value">${formatDate(p.created_at)}</span></div>
+        </div>
+      </div>
+      <div class="detail-section"><h3>Cambiar estado</h3>
+        <select class="status-select" onchange="updateStatus('${p.id}',this.value)">
+          <option value="pending" ${p.status==='pending'?'selected':''}>Pendiente</option>
+          <option value="audited" ${p.status==='audited'?'selected':''}>Auditado</option>
+          <option value="contacted" ${p.status==='contacted'?'selected':''}>Contactado</option>
+          <option value="delivered" ${p.status==='delivered'?'selected':''}>Entregado</option>
+        </select>
+      </div>
+      <div class="detail-section"><h3>Problemas detectados (${flags.length})</h3>${flagsHtml}</div>
+      <div class="detail-section"><h3>Acciones</h3>
+        <button class="copy-btn" id="copy-btn-${p.id}" onclick="copyProspectInfo('${p.id}')">📋 Copiar resumen para contacto</button>
+        <button class="copy-btn" onclick="viewReport('${p.id}')">📄 Ver reporte completo</button>
+        <button class="copy-btn" onclick="window.open('${p.url}','_blank')">🌐 Abrir sitio web</button>
+      </div>
+      <div id="report-box-${p.id}" style="display:none"></div>`
     document.getElementById('detail-panel').classList.add('open')
     document.getElementById('table-wrap').classList.add('with-detail')
     document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'))
@@ -617,10 +658,8 @@
   }
 
   function closeDetail() {
-    document.getElementById('detail-panel').classList.remove('open')
-    document.getElementById('table-wrap').classList.remove('with-detail')
-    document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'))
-    selectedId=null
+    document.getElementById('detail-panel').classList.remove('open');document.getElementById('table-wrap').classList.remove('with-detail')
+    document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'));selectedId=null
   }
 
   async function updateStatus(id,status) {
@@ -628,27 +667,57 @@
     catch(err){alert('Error: '+err.message)}
   }
 
+  async function viewReport(id) {
+    const box=document.getElementById('report-box-'+id);if(!box)return
+    if(box.style.display==='block'){box.style.display='none';return}
+    box.style.display='block';box.innerHTML='<div style="color:#888;font-size:13px;padding:10px 0">Cargando reporte...</div>'
+    try{const res=await fetch(API+'/api/prospects/'+id+'/report');const data=await res.json();if(data.error)throw new Error(data.error);const r=data.payload
+      box.innerHTML=`<div class="report-box"><div style="color:#ffd43b;font-weight:700;margin-bottom:8px">📊 ${r.diagnosis?.verdict||'Reporte'} — Score ${r.diagnosis?.score}</div><div style="color:#888;margin-bottom:12px;font-size:12px">${r.diagnosis?.summary||''}</div><div class="report-section-title" style="color:#ff6b6b">🔴 Críticos (${r.technical_issues?.critical?.length||0})</div>${(r.technical_issues?.critical||[]).map(f=>`<div class="report-item">• ${f.problema}</div>`).join('')}<div class="report-section-title" style="color:#ffa94d;margin-top:8px">🟡 Medios (${r.technical_issues?.medium?.length||0})</div>${(r.technical_issues?.medium||[]).map(f=>`<div class="report-item">• ${f.problema}</div>`).join('')}<div class="report-section-title" style="color:#69db7c;margin-top:8px">💰 Revenue en riesgo</div><div style="color:#ccc;font-size:12px">${r.revenue_at_risk?.headline||'Sin datos'}</div><div class="report-section-title" style="color:#74c0fc;margin-top:8px">✅ Solución</div><div style="color:#ccc;font-size:12px">${r.solution?.recommended_product||''}</div><div style="color:#888;font-size:11px;margin-top:4px">${r.solution?.next_step||''}</div><button class="copy-btn" onclick="copyReport('${id}')">📋 Copiar reporte para WhatsApp</button></div>`
+    }catch(err){box.innerHTML='<div style="color:#ff6b6b;font-size:12px;padding:8px 0">❌ '+err.message+'</div>'}
+  }
+
+  async function copyReport(id) {
+    const p=currentData.find(x=>x.id===id);if(!p)return
+    try{const res=await fetch(API+'/api/prospects/'+id+'/report');const data=await res.json();const r=data.payload
+      const text=`🔍 *Análisis PulsIA — ${p.domain}*\nScore SEO: *${r.diagnosis?.score}/10* (${r.diagnosis?.verdict})\n${r.diagnosis?.summary}\n\n🔴 *Problemas críticos:*\n${(r.technical_issues?.critical||[]).map(f=>'• '+f.problema).join('\n')}\n\n💰 *Revenue en riesgo:*\n${r.revenue_at_risk?.headline||''}\n\n✅ *Solución recomendada:*\n${r.solution?.recommended_product||''}\n\n${r.solution?.next_step||''}`
+      await navigator.clipboard.writeText(text);alert('✅ Reporte copiado — listo para pegar en WhatsApp')
+    }catch(err){alert('Error: '+err.message)}
+  }
+
   function copyProspectInfo(id) {
     const p=currentData.find(x=>x.id===id);if(!p)return
     const rar=rarEstimate(p.sector,p.score||0);const flags=Array.isArray(p.latest_flags)?p.latest_flags:[];const critical=flags.filter(f=>f.severity==='critical').length
-    const text=`🔍 Análisis Webpulse — ${p.domain}\nURL: ${p.url}\nSector: ${p.sector}\nScore IA: ${p.score}/10\nProducto recomendado: ${p.product_assigned}\nRevenue en riesgo: $${rar.toLocaleString()}/mes\nProblemas críticos: ${critical}\nFecha: ${formatDate(p.created_at)}`
+    const ps=p.pulsia_score?`\nPulsIA Score: ${p.pulsia_score}/100 (${p.badge_level||'—'})`:'';
+    const text=`🔍 Análisis PulsIA — ${p.domain}\nURL: ${p.url}\nSector: ${p.sector}\nScore SEO: ${p.score}/10${ps}\nProducto recomendado: ${p.product_assigned}\nRevenue en riesgo: $${rar.toLocaleString()}/mes\nProblemas críticos: ${critical}\nFecha: ${formatDate(p.created_at)}`
     navigator.clipboard.writeText(text).then(()=>{const btn=document.getElementById('copy-btn-'+id);if(btn){btn.textContent='✅ Copiado!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='📋 Copiar resumen para contacto';btn.classList.remove('copied')},2000)}})
   }
 
+  // ── LOAD PROSPECTS ────────────────────────────────────
   async function loadProspects() {
     const status=document.getElementById('filter-status').value;const minScore=document.getElementById('filter-score').value
-    let url=API+'/api/prospects?'
-    if(status)url+='status='+status+'&';if(minScore)url+='min_score='+minScore
+    let url=API+'/api/prospects?';if(status)url+='status='+status+'&';if(minScore)url+='min_score='+minScore
     const tbody=document.getElementById('prospects-table')
-    try{const res=await fetch(url);const data=await res.json();currentData=data||[]
-      if(!data||data.length===0){tbody.innerHTML='<tr><td colspan="7" class="empty">No hay prospectos aún.</td></tr>';return}
+    try{
+      const res=await fetch(url);const data=await res.json();currentData=data||[]
+      if(!data||data.length===0){tbody.innerHTML='<tr><td colspan="8" class="empty">No hay prospectos aún.</td></tr>';return}
       const total=data.length;const avgScore=(data.reduce((a,b)=>a+(b.score||0),0)/total).toFixed(1);const totalRAR=data.reduce((a,b)=>a+rarEstimate(b.sector,b.score||0),0);const critical=data.filter(p=>(p.score||0)>=7).length
       document.getElementById('stat-total').textContent=total;document.getElementById('stat-score').textContent=avgScore;document.getElementById('stat-rar').textContent='$'+totalRAR.toLocaleString();document.getElementById('stat-critical').textContent=critical
-      tbody.innerHTML=data.map(p=>{const rar=rarEstimate(p.sector,p.score||0);const sel=p.id===selectedId?'selected':''
-        return `<tr class="clickable ${sel}" data-id="${p.id}" onclick="openDetail(currentData.find(x=>x.id==='${p.id}'))"><td><div class="domain">${p.domain||p.url}<small>${p.url}</small></div></td><td>${p.sector||'general'}</td><td><span class="score-badge ${scoreClass(p.score||0)}">${p.score||'—'}</span></td><td class="rar">$${rar.toLocaleString()}/mes</td><td class="product-${(p.product_assigned||'p1').toLowerCase()}">${p.product_assigned||'—'}</td><td><span class="status-badge status-${p.status||'pending'}">${p.status||'pending'}</span></td><td>${formatDate(p.created_at)}</td></tr>`
+      tbody.innerHTML=data.map(p=>{
+        const rar=rarEstimate(p.sector,p.score||0);const sel=p.id===selectedId?'selected':''
+        const ps=p.pulsia_score?`<span style="font-weight:700;color:${pulsiaColor(p.pulsia_score)}">${p.pulsia_score}</span>`:'—'
+        return `<tr class="clickable ${sel}" data-id="${p.id}" onclick="openDetail(currentData.find(x=>x.id==='${p.id}'))">
+          <td><div class="domain">${p.domain||p.url}<small>${p.url}</small></div></td>
+          <td>${p.sector||'general'}</td>
+          <td><span class="score-badge ${scoreClass(p.score||0)}">${p.score||'—'}</span></td>
+          <td>${ps}</td>
+          <td class="rar">$${rar.toLocaleString()}/mes</td>
+          <td class="product-${(p.product_assigned||'p1').toLowerCase()}">${p.product_assigned||'—'}</td>
+          <td><span class="status-badge status-${p.status||'pending'}">${p.status||'pending'}</span></td>
+          <td>${formatDate(p.created_at)}</td>
+        </tr>`
       }).join('')
       document.getElementById('last-update').textContent='Actualizado: '+new Date().toLocaleTimeString('es-CO')
-    }catch(err){tbody.innerHTML='<tr><td colspan="7" class="empty">Error conectando con la API.</td></tr>'}
+    }catch(err){tbody.innerHTML='<tr><td colspan="8" class="empty">Error conectando con la API.</td></tr>'}
   }
 
   loadProspects()
