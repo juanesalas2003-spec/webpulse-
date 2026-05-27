@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Aura - Mundo 1</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a1a; overflow: hidden; font-family: sans-serif; }
+  canvas { display: block; }
+  #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  #chat-box { position: absolute; bottom: 20px; left: 20px; width: 340px; background: rgba(10,10,30,0.85); border: 1px solid #534AB7; border-radius: 12px; padding: 12px; pointer-events: all; }
+  #messages { height: 160px; overflow-y: auto; margin-bottom: 8px; }
+  .msg { font-size: 13px; margin-bottom: 6px; line-height: 1.5; }
+  .msg.npc { color: #9FE1CB; }
+  .msg.player { color: #CECBF6; }
+  .msg.system { color: #888780; font-style: italic; }
+  #chat-input { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid #534AB7; border-radius: 8px; padding: 8px 10px; color: white; font-size: 13px; outline: none; }
+  #hud { position: absolute; top: 16px; left: 16px; color: #9FE1CB; font-size: 12px; background: rgba(10,10,30,0.7); padding: 8px 12px; border-radius: 8px; border: 1px solid #0F6E56; }
+  #npc-label { position: absolute; color: #9FE1CB; font-size: 12px; text-align: center; pointer-events: none; display: none; }
+  #loading { position: absolute; inset: 0; background: #0a0a1a; display: flex; align-items: center; justify-content: center; color: #534AB7; font-size: 18px; }
+</style>
+</head>
+<body>
+<div id="loading">Cargando Aura...</div>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud">AURA v0.1 | Muévete: W A S D | Habla con el NPC al acercarte</div>
+  <div id="npc-label">Pulsa Enter para hablar</div>
+  <div id="chat-box" style="display:none">
+    <div id="messages"></div>
+    <input id="chat-input" placeholder="Escribe algo al NPC..." />
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const GROQ_KEY = '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';
+const NPC_PERSONALITY = 'Eres Lyra, guardiana del primer mundo de Aura. Eres curiosa, amigable y misteriosa. Sabes sobre el metaverso de Aura, sus mundos y su economía. Responde en español, máximo 2 oraciones.';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a1a);
+scene.fog = new THREE.Fog(0x0a0a1a, 20, 60);
+
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0, 4, 8);
+
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+
+const ambient = new THREE.AmbientLight(0x334466, 0.8);
+scene.add(ambient);
+const dirLight = new THREE.DirectionalLight(0x8877ff, 1.2);
+dirLight.position.set(5, 10, 5);
+dirLight.castShadow = true;
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0x00ffaa, 1.5, 15);
+pointLight.position.set(0, 3, 0);
+scene.add(pointLight);
+
+const floorGeo = new THREE.PlaneGeometry(40, 40, 20, 20);
+const floorMat = new THREE.MeshLambertMaterial({ color: 0x111133 });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+const gridHelper = new THREE.GridHelper(40, 40, 0x222255, 0x222244);
+scene.add(gridHelper);
+
+function makeBox(w, h, d, color, x, y, z) {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshLambertMaterial({ color })
+  );
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  scene.add(m);
+  return m;
+}
+
+makeBox(20, 0.3, 0.3, 0x534AB7, 0, 0.15, -10);
+makeBox(0.3, 0.3, 20, 0x534AB7, -10, 0.15, 0);
+makeBox(2, 3, 2, 0x1D9E75, -4, 1.5, -4);
+makeBox(3, 1, 3, 0x993556, 4, 0.5, -5);
+makeBox(1, 5, 1, 0x185FA5, -6, 2.5, 2);
+makeBox(1, 5, 1, 0x185FA5, -4, 2.5, 2);
+makeBox(3, 0.3, 1, 0x185FA5, -5, 5.15, 2);
+
+const playerGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.6, 8);
+const playerMat = new THREE.MeshLambertMaterial({ color: 0x7F77DD });
+const player = new THREE.Mesh(playerGeo, playerMat);
+player.position.set(0, 0.8, 5);
+player.castShadow = true;
+scene.add(player);
+
+const headGeo = new THREE.SphereGeometry(0.28, 8, 8);
+const head = new THREE.Mesh(headGeo, new THREE.MeshLambertMaterial({ color: 0xAFA9EC }));
+head.position.y = 1.05;
+player.add(head);
+
+const npcGroup = new THREE.Group();
+const npcBody = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.3, 0.3, 1.6, 8),
+  new THREE.MeshLambertMaterial({ color: 0x1D9E75 })
+);
+npcGroup.add(npcBody);
+const npcHead = new THREE.Mesh(
+  new THREE.SphereGeometry(0.28, 8, 8),
+  new THREE.MeshLambertMaterial({ color: 0x9FE1CB })
+);
+npcHead.position.y = 1.05;
+npcGroup.add(npcHead);
+npcGroup.position.set(0, 0.8, 0);
+scene.add(npcGroup);
+
+const npcLight = new THREE.PointLight(0x00ffaa, 1, 4);
+npcLight.position.set(0, 2, 0);
+npcGroup.add(npcLight);
+
+const keys = {};
+document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+const chatBox = document.getElementById('chat-box');
+const messagesDiv = document.getElementById('messages');
+const chatInput = document.getElementById('chat-input');
+const npcLabel = document.getElementById('npc-label');
+let chatOpen = false;
+let npcNear = false;
+const chatHistory = [];
+
+function addMsg(text, type) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + type;
+  d.textContent = (type === 'npc' ? 'Lyra: ' : type === 'player' ? 'Tú: ' : '') + text;
+  messagesDiv.appendChild(d);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+addMsg('Acércate al NPC verde para hablar con Lyra.', 'system');
+
+async function askNPC(userMsg) {
+  chatHistory.push({ role: 'user', content: userMsg });
+  addMsg('...', 'npc');
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + GROQ_KEY
+      },
+      body: JSON.stringify({
+        model: 'llama3-8b-8192',
+        messages: [{ role: 'system', content: NPC_PERSONALITY }, ...chatHistory],
+        max_tokens: 120
+      })
+    });
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || 'Lyra está pensando...';
+    chatHistory.push({ role: 'assistant', content: reply });
+    messagesDiv.lastChild.remove();
+    addMsg(reply, 'npc');
+  } catch(e) {
+    messagesDiv.lastChild.remove();
+    addMsg('(Error de conexión con la IA)', 'system');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && npcNear && !chatOpen) {
+    chatOpen = true;
+    chatBox.style.display = 'block';
+    chatInput.focus();
+    if (chatHistory.length === 0) askNPC('Hola, ¿quién eres?');
+  }
+  if (e.key === 'Escape' && chatOpen) {
+    chatOpen = false;
+    chatBox.style.display = 'none';
+  }
+});
+
+chatInput.addEventListener('keydown', async e => {
+  if (e.key === 'Enter' && chatInput.value.trim()) {
+    const msg = chatInput.value.trim();
+    chatInput.value = '';
+    addMsg(msg, 'player');
+    await askNPC(msg);
+  }
+});
+
+const clock = new THREE.Clock();
+let t = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  t += delta;
+
+  if (!chatOpen) {
+    const speed = 5;
+    const dir = new THREE.Vector3();
+    if (keys['w'] || keys['arrowup']) dir.z -= 1;
+    if (keys['s'] || keys['arrowdown']) dir.z += 1;
+    if (keys['a'] || keys['arrowleft']) dir.x -= 1;
+    if (keys['d'] || keys['arrowright']) dir.x += 1;
+    if (dir.length() > 0) {
+      dir.normalize().multiplyScalar(speed * delta);
+      player.position.add(dir);
+      player.position.x = Math.max(-9, Math.min(9, player.position.x));
+      player.position.z = Math.max(-9, Math.min(9, player.position.z));
+      player.rotation.y = Math.atan2(dir.x, dir.z);
+    }
+  }
+
+  npcGroup.rotation.y = t * 0.5;
+  npcLight.intensity = 0.8 + Math.sin(t * 2) * 0.4;
+
+  const dist = player.position.distanceTo(npcGroup.position);
+  npcNear = dist < 3;
+
+  if (npcNear && !chatOpen) {
+    npcLabel.style.display = 'block';
+    const pos = npcGroup.position.clone();
+    pos.y += 2.5;
+    pos.project(camera);
+    npcLabel.style.left = ((pos.x + 1) / 2 * innerWidth - 60) + 'px';
+    npcLabel.style.top = ((-pos.y + 1) / 2 * innerHeight) + 'px';
+  } else {
+    npcLabel.style.display = 'none';
+  }
+
+  camera.position.x += (player.position.x - camera.position.x) * 0.08;
+  camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
+  camera.lookAt(player.position.x, 1, player.position.z);
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+document.getElementById('loading').style.display = 'none';
+animate();
+</script>
+</body>
+</html>

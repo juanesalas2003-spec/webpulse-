@@ -13,7 +13,7 @@ import { scoreEntityDensity } from './src/entity-density.js'
 import { calculateRAR }       from './src/rar-calculator.js'
 import { supabase }           from './src/db.js'
 import { scorePulsia }        from './src/pulsia-scorer.js'
-
+import { generateSemanticLayer } from './src/semantic-layer.js'
 const app       = express()
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -428,7 +428,27 @@ app.get('/api/ai-scan/:domain', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+// ─── Semantic Layer Generator ─────────────────────────────
+app.post('/api/semantic-layer', async (req, res) => {
+  const { url, sector = 'general' } = req.body
+  if (!url) return res.status(400).json({ error: 'url requerida' })
 
+  try {
+    const domain    = new URL(url).hostname
+    const extracted = await scrapeUrl(url)
+    const layer     = generateSemanticLayer(extracted, sector, domain)
+
+    res.json({
+      domain,
+      sector,
+      json: layer.json,
+      txt:  layer.txt,
+      xml:  layer.xml
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 // ─── Servidor ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
