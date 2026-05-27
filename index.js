@@ -27,16 +27,13 @@ app.use((req, res, next) => {
 
 // ─── Landing page ─────────────────────────────────────────
 app.get('/', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  res.send(readFileSync(join(__dirname, 'landing.html'), 'utf8'))
+  res.sendFile(join(__dirname, 'landing.html'))
 })
 
 // ─── Panel de administración ─────────────────────────────
 app.get('/panel', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  res.send(readFileSync(join(__dirname, 'panel.html'), 'utf8'))
+  res.sendFile(join(__dirname, 'panel.html'))
 })
-
 // ─── Audit individual ────────────────────────────────────
 app.post('/api/audit', async (req, res) => {
   const { url, sector = 'general', contact, channel = 'whatsapp' } = req.body
