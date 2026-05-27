@@ -410,15 +410,11 @@ app.post('/api/rankings/update', async (req, res) => {
   const { prospect_id } = req.body
   try {
     const { data: prospect } = await supabase
-      .from('prospects_summary').select('*').eq('id', prospect_id).single()
+      .from('prospects')
+      .select('id, domain, url, sector, score, status, product_assigned')
+      .eq('id', prospect_id)
+      .single()
     if (!prospect) return res.status(404).json({ error: 'Prospect no encontrado' })
-
-    const { data: output } = await supabase
-      .from('outputs').select('payload').eq('prospect_id', prospect_id)
-      .eq('product', 'P1').order('created_at', { ascending: false }).limit(1).single()
-
-    const pulsiaScore = prospect.pulsia_score || 0
-    const badgeLevel  = prospect.badge_level  || 'none'
 
     await supabase.from('pulsia_rankings').upsert({
       prospect_id:  prospect.id,
@@ -426,9 +422,9 @@ app.post('/api/rankings/update', async (req, res) => {
       domain:       prospect.domain,
       industry:     prospect.sector || 'general',
       city:         'Colombia',
-      pulsia_score: pulsiaScore,
+      pulsia_score: 0,
       seo_score:    prospect.score || 0,
-      badge_level:  badgeLevel,
+      badge_level:  'none',
       last_updated: new Date().toISOString()
     }, { onConflict: 'prospect_id' })
 
