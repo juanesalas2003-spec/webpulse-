@@ -480,3 +480,5 @@ app.get('/verify/:domain', async (req, res) => {
   res.json({ domain: data.domain, score: Math.round(data.score), certified: true, date: data.created_at })
 })
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
+
+// v2
