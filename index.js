@@ -13,7 +13,7 @@ import { scoreEntityDensity } from './src/entity-density.js'
 import { calculateRAR }       from './src/rar-calculator.js'
 import { supabase }           from './src/db.js'
 import { scorePulsia }        from './src/pulsia-scorer.js'
-import { generateSemanticLayer } from './src/semantic-layer.js'
+import { generateSemanticLayer } from './semantic-layer.js'
 const app       = express()
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
