@@ -27,10 +27,12 @@ app.use((req, res, next) => {
 
 // ─── Landing page ─────────────────────────────────────────
 app.get('/', (req, res) => {
-res.sendFile(join(__dirname, 'landing.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+  res.sendFile(join(__dirname, 'landing.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+})
 app.get('/panel', (req, res) => {
   res.sendFile(join(__dirname, 'panel.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
+
 // ─── Audit individual ────────────────────────────────────
 app.post('/api/audit', async (req, res) => {
   const { url, sector = 'general', contact, channel = 'whatsapp' } = req.body
@@ -66,8 +68,7 @@ app.post('/api/audit', async (req, res) => {
     const entityDensity    = scoreEntityDensity(extracted.schema_org, sector)
     const rar              = calculateRAR(sector, score)
     const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
-
-    const pulsiaResult = scorePulsia({ ...extracted, url }, sector)
+    const pulsiaResult     = scorePulsia({ ...extracted, url }, sector)
 
     await supabase.from('audits').insert({
       prospect_id:   prospect.id,
@@ -154,6 +155,7 @@ app.post('/api/audit/batch', async (req, res) => {
       const entityDensity    = scoreEntityDensity(extracted.schema_org, sector)
       const rar              = calculateRAR(sector, score)
       const combinedScore    = parseFloat(((score + entityDensity.density_score) / 2).toFixed(2))
+      const pulsiaResult     = scorePulsia({ ...extracted, url }, sector)
       const { product }      = routeProduct(combinedScore)
 
       const { data: existing } = await supabase
@@ -384,6 +386,7 @@ app.post('/api/semantic-layer', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+
 // ─── Rankings públicos ────────────────────────────────────
 app.get('/rankings', (req, res) => {
   res.sendFile(join(__dirname, 'rankings.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
@@ -431,9 +434,8 @@ app.post('/api/rankings/update', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
-// ─── Servidor ─────────────────────────────────────────────
-const PORT = process.env.PORT || 3000
-// Badge embebible
+
+// ─── Badge embebible ──────────────────────────────────────
 app.get('/badge.js', async (req, res) => {
   const domain = req.query.domain
   if (!domain) return res.status(400).send('// domain requerido')
@@ -446,19 +448,17 @@ app.get('/badge.js', async (req, res) => {
     .limit(1)
     .single()
 
-  if (!prospect) return res.send(`// Dominio no encontrado en PulsIA`)
+  if (!prospect) return res.send('// Dominio no encontrado en PulsIA')
 
   const score = Math.round(prospect.score || 0)
   const level = score >= 80 ? 'Gold AI Ready' : score >= 60 ? 'Silver AI Ready' : 'Bronze AI Ready'
-  const color = score >= 80 ? '#FAC775' : score >= 60 ? '#B4B2A9' : '#F0997B'
 
-  const js = `
-(function(){
+  const js = `(function(){
   var d=document.createElement('a');
   d.href='https://webpulse-kqgm.onrender.com/verify/${domain}';
   d.target='_blank';
   d.style='display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid #e2e2e2;border-radius:10px;text-decoration:none;font-family:sans-serif;font-size:12px;color:#111;background:#fff';
-  d.innerHTML='<span style="background:#0a1628;width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#6c9fff;font-size:14px">✦</span><span><strong>PulsIA Certified</strong><br><span style="color:#666">Score ${score} · ${level}</span></span>';
+  d.innerHTML='<span style="background:#0a1628;width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#6c9fff;font-size:14px">&#10022;</span><span><strong>PulsIA Certified</strong><br><span style="color:#666">Score ${score} \u00b7 ${level}</span></span>';
   document.currentScript.parentNode.insertBefore(d,document.currentScript);
 })();`
 
@@ -466,7 +466,7 @@ app.get('/badge.js', async (req, res) => {
   res.send(js)
 })
 
-// Página de verificación
+// ─── Página de verificación ───────────────────────────────
 app.get('/verify/:domain', async (req, res) => {
   const { data } = await supabase
     .from('prospects')
@@ -479,4 +479,7 @@ app.get('/verify/:domain', async (req, res) => {
   if (!data) return res.status(404).json({ error: 'No encontrado' })
   res.json({ domain: data.domain, score: Math.round(data.score), certified: true, date: data.created_at })
 })
+
+// ─── Servidor ─────────────────────────────────────────────
+const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Orquestador corriendo en puerto ${PORT}`))
