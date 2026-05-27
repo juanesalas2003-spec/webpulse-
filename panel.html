@@ -650,14 +650,20 @@
         <button class="copy-btn" onclick="viewReport('${p.id}')">📄 Ver reporte completo</button>
         <button class="copy-btn" onclick="window.open('${p.url}','_blank')">🌐 Abrir sitio web</button>
         <button class="copy-btn" style="border-color:#1db97a;color:#1db97a" onclick="downloadSemanticLayer('${p.url}','${p.sector||'general'}')">🧬 Descargar Semantic Layer</button>
-      </div>
+      </div><button class="copy-btn" style="border-color:#ffd700;color:#ffd700" onclick="addToRanking('${p.url}','${p.id}')">🏆 Agregar al Ranking</button>
       <div id="report-box-${p.id}" style="display:none"></div>`
     document.getElementById('detail-panel').classList.add('open')
     document.getElementById('table-wrap').classList.add('with-detail')
     document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'))
     document.querySelectorAll('tr.clickable').forEach(r=>{if(r.dataset.id===p.id)r.classList.add('selected')})
+  }async function addToRanking(url, id) {
+    try {
+      const res  = await fetch(API+'/api/rankings/update', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prospect_id:id})})
+      const data = await res.json()
+      if(data.error) throw new Error(data.error)
+      alert('✅ Empresa agregada al ranking público')
+    } catch(err) { alert('Error: '+err.message) }
   }
-
   async function downloadSemanticLayer(url, sector) {
     const btn = event.target
     btn.textContent = '⏳ Generando...'
