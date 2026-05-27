@@ -27,12 +27,11 @@ app.use((req, res, next) => {
 
 // ─── Landing page ─────────────────────────────────────────
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'landing.html'))
+  res.sendFile(join(__dirname, 'landing.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
 
-// ─── Panel de administración ─────────────────────────────
 app.get('/panel', (req, res) => {
-  res.sendFile(join(__dirname, 'panel.html'))
+  res.sendFile(join(__dirname, 'panel.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
 // ─── Audit individual ────────────────────────────────────
 app.post('/api/audit', async (req, res) => {
