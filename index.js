@@ -209,7 +209,7 @@ app.get('/api/prospects', async (req, res) => {
   if (min_score) query = query.gte('score', parseFloat(min_score))
   const { data, error } = await query.limit(100)
   if (error) return res.status(500).json({ error: error.message })
-  res.json(data)
+  res.json(data.map(p => ({ ...p, pulsia_score: p.score })))
 })
 
 // ─── Obtener reporte de prospect ─────────────────────────
