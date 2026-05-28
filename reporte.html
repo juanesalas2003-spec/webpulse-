@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulsIA — Tu Reporte</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500&display=swap');
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #060608; --surface: #0e0e12; --border: rgba(255,255,255,0.08);
+    --accent: #7c5cfc; --accent2: #00e5a0; --text: #f0f0f8; --muted: #888899;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+  header { padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
+  .logo span { color: var(--accent); }
+  .header-domain { font-size: 13px; color: var(--muted); }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* Score hero */
+  .score-hero { text-align: center; padding: 2.5rem 0 2rem; }
+  .domain-tag { font-size: 14px; color: var(--muted); margin-bottom: 1rem; }
+  .score-circle {
+    width: 120px; height: 120px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    margin: 0 auto 1rem; border: 3px solid var(--accent);
+  }
+  .score-num { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; }
+  .score-sub { font-size: 11px; color: var(--muted); }
+  .badge-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 1.5rem;
+  }
+  .badge-platinum { background: rgba(180,178,169,0.15); color: #e0e0e0; border: 1px solid rgba(180,178,169,0.4); }
+  .badge-gold     { background: rgba(250,199,117,0.15); color: #fac775; border: 1px solid rgba(250,199,117,0.3); }
+  .badge-silver   { background: rgba(180,178,169,0.15); color: #b4b2a9; border: 1px solid rgba(180,178,169,0.3); }
+  .badge-bronze   { background: rgba(240,153,123,0.15); color: #f0997b; border: 1px solid rgba(240,153,123,0.3); }
+  .badge-none     { background: rgba(136,136,153,0.15); color: #888899; border: 1px solid rgba(136,136,153,0.3); }
+
+  /* Sección */
+  .section { margin-bottom: 2rem; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+
+  /* Dimensiones */
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .dim { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.25rem; }
+  .dim-name { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .dim-score { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 700; }
+  .dim-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .good { color: #00e5a0; } .mid { color: #fac775; } .bad { color: #f0997b; }
+
+  /* Problemas */
+  .problems { display: flex; flex-direction: column; gap: 0.5rem; }
+  .problem { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot.critical { background: #f0997b; } .dot.high { background: #fac775; } .dot.medium { background: #888899; } .dot.low { background: #444; }
+  .sev { font-size: 10px; color: var(--muted); margin-left: auto; flex-shrink: 0; text-transform: uppercase; }
+
+  /* Acciones */
+  .actions { display: flex; flex-direction: column; gap: 0.75rem; }
+  .btn {
+    padding: 14px; border-radius: 12px; font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: 100%;
+  }
+  .btn:hover { background: rgba(255,255,255,0.06); }
+  .btn.primary { background: rgba(0,229,160,0.1); border-color: rgba(0,229,160,0.3); color: var(--accent2); }
+  .btn.primary:hover { background: rgba(0,229,160,0.15); }
+  .btn.purple { background: rgba(124,92,252,0.1); border-color: rgba(124,92,252,0.3); color: #a78bfa; }
+  .btn.purple:hover { background: rgba(124,92,252,0.15); }
+
+  /* Badge embed */
+  .badge-embed { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; }
+  .embed-preview { background: #fff; border-radius: 8px; padding: 10px 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+  .embed-icon { background: #0a1628; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6c9fff; font-size: 14px; }
+  .embed-text strong { font-size: 12px; color: #111; display: block; }
+  .embed-text span { font-size: 11px; color: #666; }
+  .embed-code { background: #0a0a0c; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: monospace; font-size: 11px; color: #888; word-break: break-all; margin-bottom: 0.75rem; }
+  .copy-btn { font-size: 12px; padding: 6px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; }
+  .copy-btn:hover { color: var(--text); }
+
+  /* Loading */
+  .loading { text-align: center; padding: 4rem 0; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { text-align: center; padding: 4rem 0; color: #f08080; }
+
+  @media (max-width: 500px) { .dims { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Puls<span>IA</span></div>
+  <div class="header-domain" id="header-domain">Cargando...</div>
+</header>
+
+<div class="container">
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div style="color:var(--muted);font-size:14px">Cargando tu reporte...</div>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="score-hero">
+      <div class="domain-tag" id="res-domain"></div>
+      <div class="score-circle" id="score-circle">
+        <div class="score-num" id="res-score">—</div>
+        <div class="score-sub">/ 100</div>
+      </div>
+      <div class="badge-pill" id="res-badge">—</div>
+      <div style="font-size:13px;color:var(--muted)" id="res-date"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">5 Dimensiones</div>
+      <div class="dims" id="res-dims"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Problemas detectados</div>
+      <div class="problems" id="res-problems"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Tu badge PulsIA</div>
+      <div class="badge-embed">
+        <div class="embed-preview">
+          <div class="embed-icon">✦</div>
+          <div class="embed-text">
+            <strong>PulsIA Certified</strong>
+            <span id="badge-score-text">Score — · —</span>
+          </div>
+        </div>
+        <div class="embed-code" id="embed-code"></div>
+        <button class="copy-btn" id="copy-btn" onclick="copyEmbed()">Copiar código</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Acciones</div>
+      <div class="actions">
+        <button class="btn primary" id="btn-semantic" onclick="downloadSemantic()">📄 Descargar Semantic Layer</button>
+        <a href="/rankings" class="btn">🏆 Ver Rankings PulsIA</a>
+        <a href="/signup" class="btn purple">⚡ Nueva auditoría</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="error" id="error" style="display:none">
+    <div style="font-size:2rem;margin-bottom:1rem">😕</div>
+    <div>No encontramos el reporte para este dominio.</div>
+    <a href="/signup" style="color:var(--accent);margin-top:1rem;display:inline-block">Auditar ahora →</a>
+  </div>
+</div>
+
+<script>
+const API = 'https://webpulse-kqgm.onrender.com'
+const domain = window.location.pathname.replace('/reporte/', '').replace(/\/$/, '')
+
+document.getElementById('header-domain').textContent = domain
+
+async function loadReport() {
+  try {
+    const res  = await fetch(`${API}/api/prospects`)
+    const list = await res.json()
+    const p    = list.find(x => x.domain === domain || x.domain === 'www.' + domain || 'www.' + x.domain === domain)
+
+    if (!p) { document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; return }
+
+    const score = Math.round(p.pulsia_score || p.score || 0)
+    const bl    = score >= 90 ? 'platinum' : score >= 75 ? 'gold' : score >= 60 ? 'silver' : score >= 45 ? 'bronze' : 'none'
+    const color = score >= 75 ? '#00e5a0' : score >= 50 ? '#fac775' : '#f0997b'
+
+    document.getElementById('res-domain').textContent = p.domain
+    document.getElementById('res-score').textContent  = score
+    document.getElementById('res-score').style.color  = color
+    document.getElementById('score-circle').style.borderColor = color
+    document.getElementById('res-date').textContent   = 'Auditado el ' + new Date(p.updated_at || p.created_at).toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' })
+
+    const badgeMap = { platinum:'✦ Platinum AI Ready', gold:'✦ Gold AI Ready', silver:'◈ Silver AI Ready', bronze:'◉ Bronze AI Ready', none:'— Sin certificación' }
+    const badgeEl  = document.getElementById('res-badge')
+    badgeEl.textContent = badgeMap[bl]
+    badgeEl.className   = `badge-pill badge-${bl}`
+
+    // Dimensiones
+    const dims     = p.dimensions || {}
+    const dimNames = { semantica:'Semántica', autoridad:'Autoridad', tecnica:'Técnica', conversacional:'Conversac.', confianza:'Confianza' }
+    document.getElementById('res-dims').innerHTML = Object.entries(dimNames).map(([k, label]) => {
+      const d   = dims[k] || {}
+      const s   = d.score || 0
+      const cls = s >= 7 ? 'good' : s >= 4 ? 'mid' : 'bad'
+      return `<div class="dim"><div class="dim-name">${label}</div><div class="dim-score ${cls}">${s}</div><div class="dim-label">${d.weight || ''}</div></div>`
+    }).join('')
+
+    // Problemas
+    const flags = p.latest_flags || []
+    document.getElementById('res-problems').innerHTML = flags.slice(0, 6).map(f =>
+      `<div class="problem"><div class="dot ${f.severity}"></div><span>${f.label}</span><span class="sev">${f.severity}</span></div>`
+    ).join('') || '<div style="color:var(--muted);font-size:13px;padding:8px">Sin problemas críticos detectados 🎉</div>'
+
+    // Badge embed
+    document.getElementById('badge-score-text').textContent = `Score ${score} · ${bl === 'none' ? 'Sin certificación' : bl.charAt(0).toUpperCase() + bl.slice(1) + ' AI Ready'}`
+    const embedCode = `<script src="${API}/badge.js?domain=${p.domain}"><\/script>`
+    document.getElementById('embed-code').textContent = embedCode
+
+    document.getElementById('loading').style.display  = 'none'
+    document.getElementById('content').style.display  = 'block'
+
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('error').style.display   = 'block'
+  }
+}
+
+function copyEmbed() {
+  const code = document.getElementById('embed-code').textContent
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copy-btn')
+    btn.textContent = '✓ Copiado'
+    setTimeout(() => btn.textContent = 'Copiar código', 1500)
+  })
+}
+
+async function downloadSemantic() {
+  const url = 'https://' + domain
+  try {
+    const res  = await fetch(`${API}/api/semantic-layer`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url, sector: 'general' }) })
+    const data = await res.json()
+    const blob = new Blob([data.txt], { type: 'text/plain;charset=utf-8' })
+    const a    = document.createElement('a')
+    a.href     = URL.createObjectURL(blob)
+    a.download = `pulsia-${domain}.txt`
+    a.click()
+  } catch (err) { alert('Error generando Semantic Layer') }
+}
+
+loadReport()
+</script>
+</body>
+</html>
