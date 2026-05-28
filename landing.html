@@ -41,16 +41,6 @@
     .audit-input-row button { background: #6c47ff; color: #fff; border: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
     .audit-input-row button:hover { background: #5a38e0; }
     .audit-input-row button:disabled { background: #333; color: #666; cursor: default; }
-    .audit-result-box { margin-top: 20px; padding: 20px; background: #0f0f0f; border-radius: 12px; display: none; }
-    .audit-result-box.show { display: block; }
-    .result-score { font-size: 48px; font-weight: 800; text-align: center; margin-bottom: 4px; }
-    .result-label { text-align: center; font-size: 14px; color: #888; margin-bottom: 20px; }
-    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .result-card { background: #1a1a1a; border-radius: 8px; padding: 14px; text-align: center; }
-    .result-card .rc-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 6px; }
-    .result-card .rc-value { font-size: 20px; font-weight: 700; }
-    .result-cta { background: #6c47ff; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; }
-    .result-cta:hover { background: #5a38e0; }
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #555; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -148,7 +138,7 @@
     <a href="/rankings">Rankings</a>
     <a href="/panel" style="color:#6c47ff">Panel</a>
   </div>
-  <button class="nav-cta" onclick="document.getElementById('audit-section').scrollIntoView({behavior:'smooth'})">Auditar gratis</button>
+  <button class="nav-cta" onclick="window.location.href='/signup'">Analizar mi sitio</button>
 </nav>
 
 <section class="hero">
@@ -177,7 +167,6 @@
     </select>
     <button id="hero-btn" onclick="runHeroAudit()">Auditar gratis</button>
   </div>
-  <div class="audit-result-box" id="hero-result"></div>
 </section>
 
 <div class="social-proof">
@@ -355,7 +344,7 @@
 <section class="cta-final">
   <h2>Listo para aparecer en las IAs?</h2>
   <p>Cada dia que pasa sin optimizar tu sitio es dinero que se va a tu competencia.<br>Audita gratis ahora — 60 segundos, sin registro.</p>
-  <button onclick="document.getElementById('audit-section').scrollIntoView({behavior:'smooth'})">Auditar mi sitio gratis</button>
+  <button onclick="window.location.href='/signup'">Analizar mi sitio gratis</button>
 </section>
 
 <div id="payment-modal" class="modal-overlay">
@@ -380,6 +369,7 @@
   <p>2026 PulsIA · AI Presence Intelligence</p>
   <div class="footer-links">
     <a href="/rankings">Rankings</a>
+    <a href="/signup">Analizar gratis</a>
     <a href="/panel">Panel</a>
     <a href="#precios">Precios</a>
   </div>
@@ -387,53 +377,14 @@
 
 <script>
   const API = 'https://webpulse-kqgm.onrender.com'
-  const RAR_BY_SECTOR = { real_estate:7350, health:3200, restaurant:840, hotel:2450, general:1575, media:2000, legal:3000, education:1800 }
   let currentProduct = null
-  let auditedUrl = ''
 
-  function rarEstimate(sector, score) {
-    return Math.round((RAR_BY_SECTOR[sector]||1575) * (score/10))
-  }
-
-  async function runHeroAudit() {
+  function runHeroAudit() {
     const url    = document.getElementById('hero-url').value.trim()
-    const sector = document.getElementById('hero-sector').value
-    const btn    = document.getElementById('hero-btn')
-    const result = document.getElementById('hero-result')
-    if(!url){ alert('Ingresa la URL de tu sitio web'); return }
-    btn.disabled = true
-    btn.innerHTML = '<span class="spinner"></span> Analizando...'
-    result.className = 'audit-result-box'
-    try {
-      const res  = await fetch(API+'/api/audit', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url, sector}) })
-      const data = await res.json()
-      if(data.error) throw new Error(data.error)
-      auditedUrl = url
-      const rar        = rarEstimate(sector, data.score)
-      const scoreColor = data.score>=7?'#ff6b6b':data.score>=4?'#ffa94d':'#69db7c'
-      const verdict    = data.score>=7?'CRITICO — Invisible para las IAs':data.score>=4?'MEJORABLE — Visibilidad parcial':'ACEPTABLE — Buena visibilidad'
-      const ps         = data.pulsia_score ? `<div class="result-card"><div class="rc-label">PulsIA Score</div><div class="rc-value" style="color:#74c0fc">${data.pulsia_score}/100</div></div>` : ''
-      result.innerHTML = `
-        <div class="result-score" style="color:${scoreColor}">${data.score}<span style="font-size:24px;color:#555">/10</span></div>
-        <div class="result-label">${verdict}</div>
-        <div class="result-grid">
-          <div class="result-card"><div class="rc-label">Revenue en riesgo</div><div class="rc-value" style="color:#69db7c">$${rar.toLocaleString()}/mes</div></div>
-          <div class="result-card"><div class="rc-label">Problemas criticos</div><div class="rc-value" style="color:#ff6b6b">${data.critical_count}</div></div>
-          ${ps}
-          <div class="result-card"><div class="rc-label">Producto sugerido</div><div class="rc-value" style="color:#b197fc">${data.product_assigned}</div></div>
-        </div>
-        <button class="result-cta" onclick="openPayment('${data.product_assigned}')">
-          Solucionar ahora — ${data.product_assigned} desde $${data.product_assigned==='P1'?49:data.product_assigned==='P2'?99:data.product_assigned==='P3'?499:2000} USD
-        </button>`
-      result.classList.add('show')
-      result.scrollIntoView({behavior:'smooth', block:'center'})
-    } catch(err) {
-      result.innerHTML = `<div style="color:#ff6b6b;text-align:center;padding:20px">Error: ${err.message}</div>`
-      result.classList.add('show')
-    } finally {
-      btn.disabled = false
-      btn.innerHTML = 'Auditar gratis'
-    }
+    const sector = document.getElementById('hero-sector').value || 'general'
+    if (!url) { alert('Ingresa la URL de tu sitio web'); return }
+    const params = new URLSearchParams({ url, sector })
+    window.location.href = '/signup?' + params.toString()
   }
 
   function openPayment(product) {
@@ -442,7 +393,6 @@
     const names  = {P1:'Reporte IA', P2:'Semantic Layer', P3:'Web AI-Ready', P4:'Web + Automatizacion'}
     document.getElementById('modal-title').textContent = `${product} — ${names[product]}`
     document.getElementById('modal-desc').textContent  = `${prices[product]} · Pago seguro con MercadoPago`
-    if(auditedUrl) document.getElementById('modal-url').value = auditedUrl
     document.getElementById('payment-modal').style.display = 'flex'
   }
 
@@ -473,5 +423,3 @@
 </script>
 </body>
 </html>
- 
- 

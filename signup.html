@@ -395,6 +395,11 @@
 
 <script>
 const API = 'https://webpulse-kqgm.onrender.com'
+
+// Precargar URL desde landing
+const urlParams = new URLSearchParams(window.location.search)
+if (urlParams.get('url'))    document.getElementById('url').value    = urlParams.get('url')
+if (urlParams.get('sector')) document.getElementById('sector').value = urlParams.get('sector')
 let lastResult = null
 let lastUrl    = null
 
