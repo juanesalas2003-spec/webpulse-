@@ -38,6 +38,10 @@ app.get('/rankings', (req, res) => {
 app.get('/signup', (req, res) => {
   res.sendFile(join(__dirname, 'signup.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
+app.get('/reporte/:domain', (req, res) => {
+  res.sendFile(join(__dirname, 'reporte.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+})
+
 // ─── Audit individual ────────────────────────────────────
 app.post('/api/audit', async (req, res) => {
   const { url, sector = 'general', contact, channel = 'whatsapp' } = req.body
@@ -286,23 +290,26 @@ app.post('/api/payment/create', async (req, res) => {
 // ─── Página de gracias ────────────────────────────────────
 app.get('/gracias', (req, res) => {
   const { product, url } = req.query
+  const domain = url ? (() => { try { return new URL(url).hostname } catch { return url } })() : ''
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
   res.send(`<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><title>¡Pago exitoso! — PulsIA</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#f0f0f0;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:48px;text-align:center;max-width:480px}
+.card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:48px;text-align:center;max-width:480px;width:90%}
 h1{font-size:32px;margin-bottom:16px}p{color:#888;margin-bottom:24px;line-height:1.6}
 .badge{display:inline-block;background:#1a3d2e;color:#69db7c;padding:6px 20px;border-radius:20px;font-size:14px;margin-bottom:24px}
-a{background:#6c47ff;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block}</style>
+.btn-reporte{display:block;margin-bottom:12px;background:#1a3d2e;color:#69db7c;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px}
+.btn-inicio{color:#555;font-size:13px;text-decoration:none}</style>
 </head>
 <body><div class="card">
 <div style="font-size:64px;margin-bottom:16px">✅</div>
 <div class="badge">${product} activado</div>
 <h1>¡Pago exitoso!</h1>
 <p>Gracias por confiar en PulsIA. Recibirás tu entregable en menos de 24 horas.</p>
-<p style="font-size:13px">Sitio auditado: <strong>${url || 'pendiente'}</strong></p>
-<a href="https://webpulse-kqgm.onrender.com">← Volver al inicio</a>
+<p style="font-size:13px;margin-bottom:32px">Sitio auditado: <strong>${url || 'pendiente'}</strong></p>
+${domain ? `<a href="https://webpulse-kqgm.onrender.com/reporte/${domain}" class="btn-reporte">Ver mi reporte PulsIA →</a>` : ''}
+<a href="https://webpulse-kqgm.onrender.com" class="btn-inicio">← Volver al inicio</a>
 </div></body></html>`)
 })
 
@@ -456,7 +463,7 @@ app.get('/badge.js', async (req, res) => {
 
   const js = `(function(){
   var d=document.createElement('a');
-  d.href='https://webpulse-kqgm.onrender.com/verify/${domain}';
+  d.href='https://webpulse-kqgm.onrender.com/reporte/${domain}';
   d.target='_blank';
   d.style='display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid #e2e2e2;border-radius:10px;text-decoration:none;font-family:sans-serif;font-size:12px;color:#111;background:#fff';
   d.innerHTML='<span style="background:#0a1628;width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#6c9fff;font-size:14px">&#10022;</span><span><strong>PulsIA Certified</strong><br><span style="color:#666">Score ${score} \u00b7 ${level}</span></span>';
