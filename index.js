@@ -25,14 +25,19 @@ app.use((req, res, next) => {
   next()
 })
 
-// ─── Landing page ─────────────────────────────────────────
+// ─── Páginas HTML ─────────────────────────────────────────
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'landing.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
 app.get('/panel', (req, res) => {
   res.sendFile(join(__dirname, 'panel.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
-
+app.get('/rankings', (req, res) => {
+  res.sendFile(join(__dirname, 'rankings.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+})
+app.get('/signup', (req, res) => {
+  res.sendFile(join(__dirname, 'signup.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+})
 // ─── Audit individual ────────────────────────────────────
 app.post('/api/audit', async (req, res) => {
   const { url, sector = 'general', contact, channel = 'whatsapp' } = req.body
@@ -387,11 +392,7 @@ app.post('/api/semantic-layer', async (req, res) => {
   }
 })
 
-// ─── Rankings públicos ────────────────────────────────────
-app.get('/rankings', (req, res) => {
-  res.sendFile(join(__dirname, 'rankings.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
-})
-
+// ─── Rankings API ─────────────────────────────────────────
 app.get('/api/rankings', async (req, res) => {
   const { industry, city, limit = 10 } = req.query
   try {
@@ -423,9 +424,9 @@ app.post('/api/rankings/update', async (req, res) => {
       domain:       prospect.domain,
       industry:     prospect.sector || 'general',
       city:         'Colombia',
-      pulsia_score: 0,
+      pulsia_score: prospect.score || 0,
       seo_score:    prospect.score || 0,
-      badge_level:  'none',
+      badge_level:  prospect.score >= 75 ? 'gold' : prospect.score >= 60 ? 'silver' : prospect.score >= 45 ? 'bronze' : 'none',
       last_updated: new Date().toISOString()
     }, { onConflict: 'prospect_id' })
 
@@ -466,7 +467,7 @@ app.get('/badge.js', async (req, res) => {
   res.send(js)
 })
 
-// ─── Página de verificación ───────────────────────────────
+// ─── Verificación ─────────────────────────────────────────
 app.get('/verify/:domain', async (req, res) => {
   const { data } = await supabase
     .from('prospects')
@@ -478,6 +479,17 @@ app.get('/verify/:domain', async (req, res) => {
 
   if (!data) return res.status(404).json({ error: 'No encontrado' })
   res.json({ domain: data.domain, score: Math.round(data.score), certified: true, date: data.created_at })
+})
+
+// ─── Signup ───────────────────────────────────────────────
+app.post('/api/signup', async (req, res) => {
+  const { nombre, email, whatsapp, url, sector, prospect_id } = req.body
+  try {
+    await supabase.from('signups').insert({ nombre, email, whatsapp, url, sector, prospect_id })
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // ─── Servidor ─────────────────────────────────────────────
