@@ -41,6 +41,12 @@ app.get('/signup', (req, res) => {
 app.get('/reporte/:domain', (req, res) => {
   res.sendFile(join(__dirname, 'reporte.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 })
+app.get('/app', (req, res) => {
+  res.sendFile(join(__dirname, 'pulsia-app.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+})
+app.get('/deck', (req, res) => {
+  res.sendFile(join(__dirname, 'aegis-all.html'), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+})
 
 // ─── Audit individual ────────────────────────────────────
 app.post('/api/audit', async (req, res) => {
